@@ -143,6 +143,79 @@
     const newWorkout = () => ({ id: uid(), name: '', description: '', weekDays: [], category: '', studentId: '', createdAt: new Date().toISOString(), exercises: [] });
     const newStudent = () => ({ id: uid(), name: '', goal: '', notes: '', phone: '', createdAt: new Date().toISOString() });
 
+    // escapa texto para inserir no HTML do PDF com seguranca
+    const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+    // Gera um documento formatado e abre a impressao (o usuario escolhe "Salvar como PDF")
+    function exportWorkoutPDF(w, student) {
+      const win = window.open('', '_blank');
+      if (!win) { alert('Permita pop-ups/nova aba para exportar o PDF.'); return; }
+      const daysStr = (w.weekDays && w.weekDays.length) ? w.weekDays.join(', ') : '';
+      const exBlocks = w.exercises.map((ex, i) => {
+        const rows = ex.sets.map((s, si) =>
+          '<tr>' +
+            '<td>' + (si + 1) + '</td>' +
+            '<td>' + esc(s.reps || '-') + '</td>' +
+            '<td>' + (s.load ? esc(s.load) + esc(s.unit) : '-') + '</td>' +
+            '<td>' + esc(s.rest) + 's</td>' +
+            '<td>' + esc(s.pse) + '/10</td>' +
+          '</tr>'
+        ).join('');
+        const photos = (ex.media || []).filter(m => m.type === 'image');
+        const videoCount = (ex.media || []).filter(m => m.type === 'video').length;
+        const imgs = photos.length
+          ? '<div class="imgs">' + photos.map(m => '<img src="' + m.data + '" />').join('') + '</div>'
+          : '';
+        const vidNote = videoCount ? '<div class="note">' + videoCount + ' video(s) demonstrativo(s) disponivel(is) no app.</div>' : '';
+        const meta = [ex.muscleGroup, ex.equipment].filter(Boolean).map(esc).join(' | ');
+        return (
+          '<div class="ex">' +
+            '<div class="ex-title">' + (i + 1) + '. ' + esc(ex.name || 'Exercicio') + (meta ? ' <span class="ex-meta">(' + meta + ')</span>' : '') + '</div>' +
+            (ex.notes ? '<div class="note">Obs: ' + esc(ex.notes) + '</div>' : '') +
+            '<table><thead><tr><th>Serie</th><th>Reps</th><th>Carga</th><th>Descanso</th><th>PSE</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+            imgs + vidNote +
+          '</div>'
+        );
+      }).join('');
+
+      const studentBlock = student
+        ? '<div class="box"><strong>Aluno:</strong> ' + esc(student.name) +
+          (student.goal ? ' &nbsp;|&nbsp; <strong>Objetivo:</strong> ' + esc(student.goal) : '') +
+          (student.phone ? ' &nbsp;|&nbsp; <strong>Contato:</strong> ' + esc(student.phone) : '') +
+          '</div>'
+        : '';
+
+      const html =
+        '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>' + esc(w.name) + '</title><style>' +
+        '* { box-sizing: border-box; } body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; padding: 28px; }' +
+        'h1 { font-size: 22px; margin: 0 0 2px; color: #ea580c; } .sub { color: #666; font-size: 12px; margin-bottom: 14px; }' +
+        '.box { background: #f6f6f6; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; }' +
+        '.desc { font-size: 13px; margin-bottom: 14px; }' +
+        '.ex { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 14px; page-break-inside: avoid; }' +
+        '.ex-title { font-size: 15px; font-weight: bold; margin-bottom: 6px; } .ex-meta { font-weight: normal; color: #666; font-size: 12px; }' +
+        '.note { font-size: 12px; color: #b45309; font-style: italic; margin: 4px 0; }' +
+        'table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }' +
+        'th, td { border: 1px solid #ccc; padding: 5px 6px; text-align: center; } th { background: #fafafa; }' +
+        '.imgs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }' +
+        '.imgs img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }' +
+        '.footer { margin-top: 20px; text-align: center; color: #999; font-size: 11px; }' +
+        '@media print { body { padding: 12px; } .ex { break-inside: avoid; } }' +
+        '</style></head><body>' +
+        '<h1>' + esc(w.name) + '</h1>' +
+        '<div class="sub">' + (w.category ? esc(w.category) + ' &middot; ' : '') + w.exercises.length + ' exercicios' + (daysStr ? ' &middot; ' + esc(daysStr) : '') + '</div>' +
+        studentBlock +
+        (w.description ? '<div class="desc">' + esc(w.description) + '</div>' : '') +
+        exBlocks +
+        '<div class="footer">Gerado pelo WorkoutPro em ' + new Date().toLocaleDateString('pt-BR') + '</div>' +
+        '</body></html>';
+
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      // aguarda imagens carregarem antes de imprimir
+      win.onload = () => { setTimeout(() => { win.focus(); win.print(); }, 300); };
+    }
+
     const AppCtx = createContext(null);
 
     function AppProvider({ children }) {
@@ -620,11 +693,12 @@
     }
 
     function WorkoutDetail() {
-      const { activeWorkout, openEdit, openRun, deleteWorkout, setView, history, studentName } = useContext(AppCtx);
+      const { activeWorkout, openEdit, openRun, deleteWorkout, setView, history, studentName, students } = useContext(AppCtx);
       const [modal, setModal] = useState(null);
       const [openEx, setOpenEx] = useState(null);
       const w = activeWorkout;
       if (!w) return null;
+      const studentObj = w.studentId ? students.find(s => s.id === w.studentId) : null;
       const totalSets = w.exercises.reduce((a, e) => a + e.sets.length, 0);
       const allPse = w.exercises.flatMap(e => e.sets.map(s => s.pse));
       const avgPse = allPse.length ? (allPse.reduce((a, b) => a + b, 0) / allPse.length).toFixed(1) : '-';
@@ -645,6 +719,7 @@
                 </div>
               </div>
               <button className="btn btn-green" onClick={() => openRun(w.id)}>Iniciar</button>
+              <button className="btn btn-ghost" onClick={() => exportWorkoutPDF(w, studentObj)}>Exportar PDF</button>
               <button className="btn btn-ghost" onClick={() => openEdit(w.id)}>Editar</button>
               <button className="btn btn-danger" onClick={() => { if (confirm('Excluir treino?')) deleteWorkout(w.id); }}>Excluir</button>
             </div>
