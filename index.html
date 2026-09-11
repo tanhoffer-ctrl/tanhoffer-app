@@ -16,6 +16,7 @@
       --border: rgba(255,255,255,0.1);
       --text: #f5f5f5;
       --muted: #9ca3af;
+      --green: #22c55e;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -31,58 +32,29 @@
     ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
 
     .container { max-width: 900px; margin: 0 auto; padding: 0 16px; }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-    }
-    .btn {
-      border: none;
-      border-radius: 12px;
-      padding: 10px 18px;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; }
+    .btn { border: none; border-radius: 12px; padding: 10px 18px; font-weight: 600; font-size: 14px; transition: all 0.2s; }
     .btn-primary { background: var(--primary); color: #fff; }
     .btn-primary:hover { background: var(--primary-dark); }
     .btn-ghost { background: #2a2a2a; color: var(--text); }
     .btn-ghost:hover { background: #383838; }
     .btn-danger { background: rgba(220,38,38,0.2); color: #f87171; }
     .btn-danger:hover { background: rgba(220,38,38,0.4); }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { background: #16a34a; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
 
-    .input {
-      width: 100%;
-      background: #1c1c1c;
-      border: 1px solid #333;
-      border-radius: 10px;
-      padding: 10px 12px;
-      color: var(--text);
-      font-size: 14px;
-    }
+    .input { width: 100%; background: #1c1c1c; border: 1px solid #333; border-radius: 10px; padding: 10px 12px; color: var(--text); font-size: 14px; }
     .input:focus { outline: none; border-color: var(--primary); }
     .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; display: block; }
 
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 600;
-    }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
     .row { display: flex; align-items: center; gap: 12px; }
     .wrap { flex-wrap: wrap; }
     .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
 
-    .header-bar {
-      position: sticky; top: 0; z-index: 30;
-      background: rgba(15,15,15,0.95);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--border);
-      padding: 14px 0;
-      margin-bottom: 20px;
-    }
+    .header-bar { position: sticky; top: 0; z-index: 30; background: rgba(15,15,15,0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 14px 0; margin-bottom: 20px; }
     .stat-box { text-align: center; padding: 16px; }
     .stat-num { font-size: 24px; font-weight: 700; }
     .stat-label { font-size: 12px; color: var(--muted); }
@@ -90,37 +62,40 @@
     .pse-bar { display: flex; gap: 3px; margin-bottom: 6px; }
     .pse-block { flex: 1; height: 10px; border-radius: 2px; cursor: pointer; transition: all 0.15s; }
 
-    .media-thumb {
-      position: relative; width: 80px; height: 80px;
-      border-radius: 8px; overflow: hidden; background: #222; cursor: pointer;
-    }
+    .media-thumb { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; background: #222; cursor: pointer; }
     .media-thumb img, .media-thumb video { width: 100%; height: 100%; object-fit: cover; }
-    .media-del {
-      position: absolute; top: 2px; right: 2px;
-      width: 22px; height: 22px; border-radius: 50%;
-      background: #dc2626; color: #fff; border: none;
-      font-size: 14px; line-height: 1;
-    }
-    .dropzone {
-      border: 2px dashed #444; border-radius: 12px;
-      padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s;
-    }
+    .media-del { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; background: #dc2626; color: #fff; border: none; font-size: 14px; line-height: 1; }
+    .dropzone { border: 2px dashed #444; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
     .dropzone:hover, .dropzone.drag { border-color: var(--primary); background: rgba(249,115,22,0.08); }
 
-    .modal-back {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 50; padding: 20px;
-    }
-    .toast {
-      position: fixed; bottom: 24px; right: 24px; z-index: 60;
-      padding: 12px 20px; border-radius: 12px; font-weight: 500;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    }
+    .modal-back { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; }
+    .toast { position: fixed; bottom: 24px; right: 24px; z-index: 60; padding: 12px 20px; border-radius: 12px; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     th { color: var(--muted); font-size: 11px; text-align: center; padding: 6px; border-bottom: 1px solid var(--border); }
     td { text-align: center; padding: 8px 6px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .clickable { cursor: pointer; }
+
+    /* progress bar */
+    .progress-track { height: 8px; background: #2a2a2a; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--green); transition: width 0.3s; }
+
+    /* rest timer */
+    .timer-overlay { position: fixed; bottom: 0; left: 0; right: 0; z-index: 55; background: rgba(20,20,20,0.98); border-top: 2px solid var(--primary); padding: 16px; display: flex; align-items: center; justify-content: center; gap: 20px; box-shadow: 0 -8px 32px rgba(0,0,0,0.5); }
+    .timer-num { font-size: 42px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+    .checkbtn { width: 30px; height: 30px; border-radius: 8px; border: 2px solid #444; background: transparent; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .checkbtn.done { background: var(--green); border-color: var(--green); }
+
+    /* simple bar chart */
+    .chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; padding-top: 10px; }
+    .chart-bar { flex: 1; background: var(--primary); border-radius: 4px 4px 0 0; min-height: 3px; position: relative; transition: height 0.3s; }
+    .chart-bar span { position: absolute; top: -18px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--muted); }
+    .chart-labels { display: flex; gap: 6px; margin-top: 4px; }
+    .chart-labels div { flex: 1; text-align: center; font-size: 9px; color: var(--muted); overflow: hidden; }
+
+    .navtab { padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 13px; }
+    .navtab.active { background: var(--primary); color: #fff; }
+    .navtab.inactive { background: transparent; color: var(--muted); }
   </style>
 </head>
 <body>
@@ -133,16 +108,14 @@
     const MUSCLE_GROUPS = ['Peito','Costas','Ombros','Biceps','Triceps','Antebraco','Abdomen','Gluteos','Quadriceps','Posterior de coxa','Panturrilha','Full Body'];
     const EQUIPMENT = ['Barra','Halter','Maquina','Cabo','Elastico','Peso Corporal','Smith','Kettlebell','TRX','Anilha'];
     const CATEGORIES = ['Hipertrofia','Forca','Resistencia','Emagrecimento','Funcional','Reabilitacao','Potencia'];
-    const PSE_LABELS = {
-      0:'Sem esforco', 1:'Muito leve', 2:'Leve', 3:'Moderado', 4:'Pouco intenso',
-      5:'Intenso', 6:'Bem intenso', 7:'Muito intenso', 8:'Extremamente intenso',
-      9:'Quase maximo', 10:'Maximo absoluto'
-    };
+    const PSE_LABELS = { 0:'Sem esforco',1:'Muito leve',2:'Leve',3:'Moderado',4:'Pouco intenso',5:'Intenso',6:'Bem intenso',7:'Muito intenso',8:'Extremamente intenso',9:'Quase maximo',10:'Maximo absoluto' };
     const PSE_COLORS = ['#4ade80','#86efac','#a3e635','#bef264','#facc15','#fb923c','#f97316','#ef4444','#dc2626','#b91c1c','#7f1d1d'];
     const WEEK_DAYS = ['Seg','Ter','Qua','Qui','Sex','Sab','Dom'];
 
     const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
     const clone = (o) => JSON.parse(JSON.stringify(o));
+    const fmtDate = (iso) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const fmtTime = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 
     function fileToBase64(file) {
       return new Promise((res, rej) => {
@@ -153,9 +126,22 @@
       });
     }
 
-    const newSet = () => ({ id: uid(), reps: '', load: '', unit: 'kg', pse: 7, rest: 60 });
+    // volume de uma sessao/treino = soma de (reps numericas * carga) das series concluidas
+    function calcVolume(exercises, onlyDone) {
+      let vol = 0;
+      exercises.forEach(ex => ex.sets.forEach(s => {
+        if (onlyDone && !s.done) return;
+        const reps = parseFloat(String(s.reps).replace(/[^0-9.]/g, '')) || 0;
+        const load = parseFloat(s.load) || 0;
+        vol += reps * load;
+      }));
+      return Math.round(vol);
+    }
+
+    const newSet = () => ({ id: uid(), reps: '', load: '', unit: 'kg', pse: 7, rest: 60, done: false });
     const newExercise = () => ({ id: uid(), name: '', muscleGroup: '', equipment: '', notes: '', sets: [newSet()], media: [] });
-    const newWorkout = () => ({ id: uid(), name: '', description: '', weekDays: [], category: '', createdAt: new Date().toISOString(), exercises: [] });
+    const newWorkout = () => ({ id: uid(), name: '', description: '', weekDays: [], category: '', studentId: '', createdAt: new Date().toISOString(), exercises: [] });
+    const newStudent = () => ({ id: uid(), name: '', goal: '', notes: '', phone: '', createdAt: new Date().toISOString() });
 
     const AppCtx = createContext(null);
 
@@ -163,39 +149,95 @@
       const [workouts, setWorkouts] = useState(() => {
         try { return JSON.parse(localStorage.getItem('workouts') || '[]'); } catch (e) { return []; }
       });
+      const [history, setHistory] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('history') || '[]'); } catch (e) { return []; }
+      });
+      const [students, setStudents] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('students') || '[]'); } catch (e) { return []; }
+      });
       const [view, setView] = useState('dashboard');
       const [activeId, setActiveId] = useState(null);
+      const [activeStudentId, setActiveStudentId] = useState(null); // aluno selecionado p/ filtro
       const [toast, setToast] = useState(null);
 
       useEffect(() => { localStorage.setItem('workouts', JSON.stringify(workouts)); }, [workouts]);
+      useEffect(() => { localStorage.setItem('history', JSON.stringify(history)); }, [history]);
+      useEffect(() => { localStorage.setItem('students', JSON.stringify(students)); }, [students]);
 
-      const showToast = (msg, type) => {
-        setToast({ msg, type: type || 'success' });
-        setTimeout(() => setToast(null), 2600);
-      };
+      const showToast = (msg, type) => { setToast({ msg, type: type || 'success' }); setTimeout(() => setToast(null), 2600); };
+
       const saveWorkout = (w) => {
         setWorkouts(prev => prev.find(x => x.id === w.id) ? prev.map(x => x.id === w.id ? w : x) : [...prev, w]);
         showToast('Treino salvo!');
         setView('dashboard');
       };
-      const deleteWorkout = (id) => {
-        setWorkouts(prev => prev.filter(w => w.id !== id));
-        showToast('Treino excluido', 'error');
-        setView('dashboard');
-      };
+      const deleteWorkout = (id) => { setWorkouts(prev => prev.filter(w => w.id !== id)); showToast('Treino excluido', 'error'); setView('dashboard'); };
       const duplicateWorkout = (id) => {
         const o = workouts.find(w => w.id === id);
         if (!o) return;
         setWorkouts(prev => [...prev, { ...clone(o), id: uid(), name: o.name + ' (copia)', createdAt: new Date().toISOString() }]);
         showToast('Treino duplicado!');
       };
+
+      // ---- Historico ----
+      const saveSession = (session) => { setHistory(prev => [session, ...prev]); showToast('Sessao registrada no historico!'); };
+      const deleteSession = (id) => { setHistory(prev => prev.filter(s => s.id !== id)); showToast('Sessao removida', 'error'); };
+
+      // ---- Alunos ----
+      const saveStudent = (s) => {
+        setStudents(prev => prev.find(x => x.id === s.id) ? prev.map(x => x.id === s.id ? s : x) : [...prev, s]);
+        showToast('Aluno salvo!');
+      };
+      const deleteStudent = (id) => {
+        // treinos do aluno ficam sem aluno atribuido (nao sao apagados)
+        setWorkouts(prev => prev.map(w => w.studentId === id ? { ...w, studentId: '' } : w));
+        setStudents(prev => prev.filter(s => s.id !== id));
+        if (activeStudentId === id) setActiveStudentId(null);
+        showToast('Aluno excluido', 'error');
+      };
+      const studentName = (id) => { const s = students.find(x => x.id === id); return s ? s.name : ''; };
+
+      // ---- Export / Import ----
+      const exportData = () => {
+        const blob = new Blob([JSON.stringify({ workouts, history, students, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'workoutpro-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+        a.click(); URL.revokeObjectURL(url);
+        showToast('Backup exportado!');
+      };
+      const importData = (json, mode) => {
+        try {
+          const parsed = JSON.parse(json);
+          const impW = parsed.workouts || [];
+          const impH = parsed.history || [];
+          const impS = parsed.students || [];
+          if (mode === 'replace') { setWorkouts(impW); setHistory(impH); setStudents(impS); }
+          else {
+            setWorkouts(prev => { const ids = new Set(prev.map(x => x.id)); return [...prev, ...impW.filter(x => !ids.has(x.id))]; });
+            setHistory(prev => { const ids = new Set(prev.map(x => x.id)); return [...prev, ...impH.filter(x => !ids.has(x.id))]; });
+            setStudents(prev => { const ids = new Set(prev.map(x => x.id)); return [...prev, ...impS.filter(x => !ids.has(x.id))]; });
+          }
+          showToast('Dados importados!');
+          return true;
+        } catch (e) { showToast('Arquivo invalido', 'error'); return false; }
+      };
+
       const openNew = () => { setActiveId(null); setView('form'); };
       const openEdit = (id) => { setActiveId(id); setView('form'); };
       const openDetail = (id) => { setActiveId(id); setView('detail'); };
+      const openRun = (id) => { setActiveId(id); setView('run'); };
       const activeWorkout = useMemo(() => workouts.find(w => w.id === activeId) || null, [workouts, activeId]);
 
       return (
-        <AppCtx.Provider value={{ workouts, saveWorkout, deleteWorkout, duplicateWorkout, view, setView, activeWorkout, openNew, openEdit, openDetail, toast }}>
+        <AppCtx.Provider value={{
+          workouts, history, students, saveWorkout, deleteWorkout, duplicateWorkout,
+          saveSession, deleteSession, exportData, importData,
+          saveStudent, deleteStudent, studentName,
+          activeStudentId, setActiveStudentId,
+          view, setView, activeWorkout, activeId,
+          openNew, openEdit, openDetail, openRun, toast
+        }}>
           {children}
         </AppCtx.Provider>
       );
@@ -204,11 +246,7 @@
     function Toast({ toast }) {
       if (!toast) return null;
       const err = toast.type === 'error';
-      return (
-        <div className="toast" style={{ background: err ? '#7f1d1d' : '#ea580c', color: '#fff' }}>
-          {toast.msg}
-        </div>
-      );
+      return <div className="toast" style={{ background: err ? '#7f1d1d' : '#ea580c', color: '#fff' }}>{toast.msg}</div>;
     }
 
     function PSESelector({ value, onChange }) {
@@ -248,16 +286,13 @@
             onDrop={e => { e.preventDefault(); setDrag(false); handle(e.dataTransfer.files); }}>
             <div style={{ fontSize: 24 }}>[ + ]</div>
             <div style={{ fontSize: 13, color: 'var(--muted)' }}>Clique ou arraste fotos/videos</div>
-            <input ref={inputRef} type="file" accept="image/*,video/*" multiple hidden
-              onChange={e => handle(e.target.files)} />
+            <input ref={inputRef} type="file" accept="image/*,video/*" multiple hidden onChange={e => handle(e.target.files)} />
           </div>
           {media.length > 0 && (
             <div className="row wrap" style={{ marginTop: 12, gap: 8 }}>
               {media.map(m => (
                 <div key={m.id} className="media-thumb">
-                  {m.type === 'video'
-                    ? <video src={m.data} muted />
-                    : <img src={m.data} alt={m.name} />}
+                  {m.type === 'video' ? <video src={m.data} muted /> : <img src={m.data} alt={m.name} />}
                   <button className="media-del" onClick={e => { e.stopPropagation(); onRemove(m.id); }}>x</button>
                 </div>
               ))}
@@ -282,9 +317,7 @@
               <span style={{ color: 'var(--muted)' }}>{idx + 1} / {media.length}</span>
               <button className="btn btn-ghost" onClick={() => setIdx(i => Math.min(media.length - 1, i + 1))} disabled={idx === media.length - 1}>Proximo</button>
             </div>
-            <div style={{ textAlign: 'center', marginTop: 10 }}>
-              <button className="btn btn-primary" onClick={onClose}>Fechar</button>
-            </div>
+            <div style={{ textAlign: 'center', marginTop: 10 }}><button className="btn btn-primary" onClick={onClose}>Fechar</button></div>
           </div>
         </div>
       );
@@ -344,28 +377,18 @@
           {open && (
             <div style={{ padding: 16, borderTop: '1px solid var(--border)' }}>
               <div className="grid2" style={{ marginBottom: 16 }}>
-                <div>
-                  <span className="label">Nome do exercicio *</span>
-                  <input className="input" value={exercise.name} placeholder="ex: Supino Reto com Barra" onChange={e => up('name', e.target.value)} />
-                </div>
-                <div>
-                  <span className="label">Grupo muscular</span>
+                <div><span className="label">Nome do exercicio *</span>
+                  <input className="input" value={exercise.name} placeholder="ex: Supino Reto com Barra" onChange={e => up('name', e.target.value)} /></div>
+                <div><span className="label">Grupo muscular</span>
                   <select className="input" value={exercise.muscleGroup} onChange={e => up('muscleGroup', e.target.value)}>
-                    <option value="">Selecionar...</option>
-                    {MUSCLE_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <span className="label">Equipamento</span>
+                    <option value="">Selecionar...</option>{MUSCLE_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select></div>
+                <div><span className="label">Equipamento</span>
                   <select className="input" value={exercise.equipment} onChange={e => up('equipment', e.target.value)}>
-                    <option value="">Selecionar...</option>
-                    {EQUIPMENT.map(x => <option key={x} value={x}>{x}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <span className="label">Observacoes</span>
-                  <input className="input" value={exercise.notes} placeholder="Tecnica, dicas..." onChange={e => up('notes', e.target.value)} />
-                </div>
+                    <option value="">Selecionar...</option>{EQUIPMENT.map(x => <option key={x} value={x}>{x}</option>)}
+                  </select></div>
+                <div><span className="label">Observacoes</span>
+                  <input className="input" value={exercise.notes} placeholder="Tecnica, dicas..." onChange={e => up('notes', e.target.value)} /></div>
               </div>
               <div style={{ marginBottom: 12 }}>
                 <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
@@ -380,9 +403,7 @@
               </div>
               <div>
                 <strong style={{ fontSize: 14, display: 'block', marginBottom: 8 }}>Fotos / Videos Demonstrativos</strong>
-                <MediaUpload media={exercise.media}
-                  onAdd={m => up('media', [...exercise.media, m])}
-                  onRemove={id => up('media', exercise.media.filter(x => x.id !== id))} />
+                <MediaUpload media={exercise.media} onAdd={m => up('media', [...exercise.media, m])} onRemove={id => up('media', exercise.media.filter(x => x.id !== id))} />
               </div>
             </div>
           )}
@@ -391,15 +412,19 @@
     }
 
     function WorkoutForm() {
-      const { activeWorkout, saveWorkout, setView } = useContext(AppCtx);
-      const [w, setW] = useState(() => activeWorkout ? clone(activeWorkout) : newWorkout());
+      const { activeWorkout, saveWorkout, setView, students, activeStudentId } = useContext(AppCtx);
+      const [w, setW] = useState(() => {
+        if (activeWorkout) return clone(activeWorkout);
+        const nw = newWorkout();
+        if (activeStudentId) nw.studentId = activeStudentId; // pre-seleciona aluno filtrado
+        return nw;
+      });
       const [tab, setTab] = useState('info');
       const [errors, setErrors] = useState([]);
       const up = (f, v) => setW(p => ({ ...p, [f]: v }));
       const toggleDay = d => up('weekDays', w.weekDays.includes(d) ? w.weekDays.filter(x => x !== d) : [...w.weekDays, d]);
       const addEx = () => { up('exercises', [...w.exercises, newExercise()]); setTab('ex'); };
       const updEx = (id, ex) => up('exercises', w.exercises.map(e => e.id === id ? ex : e));
-
       const save = () => {
         const errs = [];
         if (!w.name.trim()) errs.push('Nome do treino e obrigatorio');
@@ -409,7 +434,6 @@
         if (errs.length === 0) saveWorkout(w);
         else setTab(errs[0].includes('Nome do treino') ? 'info' : 'ex');
       };
-
       return (
         <div className="container">
           <div className="header-bar">
@@ -426,31 +450,29 @@
               <span className="clickable" style={{ fontWeight: 600, color: tab === 'ex' ? 'var(--primary)' : 'var(--muted)' }} onClick={() => setTab('ex')}>Exercicios ({w.exercises.length})</span>
             </div>
           </div>
-
           {errors.length > 0 && (
             <div className="card" style={{ padding: 12, marginBottom: 16, background: 'rgba(220,38,38,0.15)', borderColor: '#7f1d1d' }}>
               {errors.map((e, i) => <div key={i} style={{ color: '#f87171', fontSize: 13 }}>! {e}</div>)}
             </div>
           )}
-
           {tab === 'info' && (
             <div>
               <div className="card" style={{ padding: 20, marginBottom: 16 }}>
-                <div style={{ marginBottom: 12 }}>
-                  <span className="label">Nome do treino *</span>
-                  <input className="input" value={w.name} placeholder="ex: Treino A - Peito e Triceps" onChange={e => up('name', e.target.value)} />
-                </div>
-                <div style={{ marginBottom: 12 }}>
-                  <span className="label">Descricao / objetivo</span>
-                  <textarea className="input" rows={3} value={w.description} placeholder="Objetivo deste treino..." onChange={e => up('description', e.target.value)} />
-                </div>
-                <div>
-                  <span className="label">Categoria</span>
-                  <select className="input" value={w.category} onChange={e => up('category', e.target.value)}>
-                    <option value="">Selecionar...</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                <div style={{ marginBottom: 12 }}><span className="label">Nome do treino *</span>
+                  <input className="input" value={w.name} placeholder="ex: Treino A - Peito e Triceps" onChange={e => up('name', e.target.value)} /></div>
+                <div style={{ marginBottom: 12 }}><span className="label">Aluno</span>
+                  <select className="input" value={w.studentId || ''} onChange={e => up('studentId', e.target.value)}>
+                    <option value="">Sem aluno / pessoal</option>
+                    {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
+                  {students.length === 0 && <span style={{ fontSize: 11, color: 'var(--muted)' }}>Nenhum aluno cadastrado. Adicione alunos na aba "Alunos".</span>}
                 </div>
+                <div style={{ marginBottom: 12 }}><span className="label">Descricao / objetivo</span>
+                  <textarea className="input" rows={3} value={w.description} placeholder="Objetivo deste treino..." onChange={e => up('description', e.target.value)} /></div>
+                <div><span className="label">Categoria</span>
+                  <select className="input" value={w.category} onChange={e => up('category', e.target.value)}>
+                    <option value="">Selecionar...</option>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select></div>
               </div>
               <div className="card" style={{ padding: 20 }}>
                 <span className="label">Dias da semana</span>
@@ -462,7 +484,6 @@
               </div>
             </div>
           )}
-
           {tab === 'ex' && (
             <div>
               {w.exercises.length === 0 ? (
@@ -474,9 +495,7 @@
               ) : (
                 <div>
                   {w.exercises.map((ex, i) => (
-                    <ExerciseCard key={ex.id} exercise={ex} index={i}
-                      onChange={n => updEx(ex.id, n)}
-                      onDelete={() => up('exercises', w.exercises.filter(x => x.id !== ex.id))} />
+                    <ExerciseCard key={ex.id} exercise={ex} index={i} onChange={n => updEx(ex.id, n)} onDelete={() => up('exercises', w.exercises.filter(x => x.id !== ex.id))} />
                   ))}
                   <button className="btn btn-ghost" style={{ width: '100%', padding: 14 }} onClick={addEx}>+ Adicionar exercicio</button>
                 </div>
@@ -487,8 +506,121 @@
       );
     }
 
+    /* ============ MODO EXECUCAO (marcar series + timer descanso) ============ */
+    function RunMode() {
+      const { activeWorkout, saveSession, setView } = useContext(AppCtx);
+      const [session, setSession] = useState(() => clone(activeWorkout));
+      const [timer, setTimer] = useState(null); // { remaining, total }
+      const [modal, setModal] = useState(null);
+      const audioRef = useRef(null);
+
+      useEffect(() => {
+        if (!timer) return;
+        if (timer.remaining <= 0) {
+          beep();
+          setTimer(null);
+          return;
+        }
+        const id = setTimeout(() => setTimer(t => t ? { ...t, remaining: t.remaining - 1 } : null), 1000);
+        return () => clearTimeout(id);
+      }, [timer]);
+
+      function beep() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          const o = ctx.createOscillator(); const g = ctx.createGain();
+          o.connect(g); g.connect(ctx.destination);
+          o.frequency.value = 880; o.type = 'sine';
+          g.gain.setValueAtTime(0.3, ctx.currentTime);
+          o.start(); o.stop(ctx.currentTime + 0.4);
+          if (navigator.vibrate) navigator.vibrate(300);
+        } catch (e) {}
+      }
+
+      const w = session;
+      if (!w) return null;
+      const allSets = w.exercises.flatMap(e => e.sets);
+      const doneCount = allSets.filter(s => s.done).length;
+      const total = allSets.length;
+      const pct = total ? Math.round((doneCount / total) * 100) : 0;
+
+      const toggleSet = (exId, setId) => {
+        setSession(prev => ({
+          ...prev,
+          exercises: prev.exercises.map(e => e.id !== exId ? e : {
+            ...e, sets: e.sets.map(s => {
+              if (s.id !== setId) return s;
+              const nowDone = !s.done;
+              if (nowDone && s.rest > 0) setTimer({ remaining: s.rest, total: s.rest });
+              return { ...s, done: nowDone };
+            })
+          })
+        }));
+      };
+
+      const finish = () => {
+        const vol = calcVolume(w.exercises, true);
+        const pseAll = allSets.filter(s => s.done).map(s => s.pse);
+        const avgPse = pseAll.length ? (pseAll.reduce((a, b) => a + b, 0) / pseAll.length).toFixed(1) : 0;
+        saveSession({
+          id: uid(), workoutId: w.id, workoutName: w.name, date: new Date().toISOString(),
+          setsDone: doneCount, setsTotal: total, volume: vol, avgPse: parseFloat(avgPse),
+          exercises: w.exercises.map(e => ({ name: e.name, sets: e.sets.filter(s => s.done).map(s => ({ reps: s.reps, load: s.load, unit: s.unit, pse: s.pse })) }))
+        });
+        setView('dashboard');
+      };
+
+      return (
+        <div className="container" style={{ paddingBottom: timer ? 100 : 20 }}>
+          <div className="header-bar">
+            <div className="row">
+              <button className="btn btn-ghost" onClick={() => { if (confirm('Sair sem salvar a sessao?')) setView('dashboard'); }}>Sair</button>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 18 }}>Executando: {w.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>{doneCount}/{total} series concluidas</div>
+              </div>
+              <button className="btn btn-green" onClick={finish} disabled={doneCount === 0}>Concluir treino</button>
+            </div>
+            <div className="progress-track" style={{ marginTop: 12 }}><div className="progress-fill" style={{ width: pct + '%' }}></div></div>
+          </div>
+
+          {w.exercises.map((ex, ei) => (
+            <div key={ex.id} className="card" style={{ marginBottom: 16, padding: 16 }}>
+              <div className="row" style={{ marginBottom: 12 }}>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(249,115,22,0.2)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{ei + 1}</div>
+                <strong style={{ flex: 1 }}>{ex.name}</strong>
+                {ex.media.length > 0 && <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setModal({ media: ex.media, i: 0 })}>Ver midia</button>}
+              </div>
+              {ex.sets.map((s, si) => (
+                <div key={s.id} className="row" style={{ padding: '8px 0', borderTop: si > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none', opacity: s.done ? 0.6 : 1 }}>
+                  <button className={'checkbtn' + (s.done ? ' done' : '')} onClick={() => toggleSet(ex.id, s.id)}>{s.done ? 'v' : ''}</button>
+                  <div style={{ flex: 1, textDecoration: s.done ? 'line-through' : 'none' }}>
+                    <strong>Serie {si + 1}:</strong> {s.reps || '?'} reps {s.load ? '@ ' + s.load + s.unit : ''}
+                  </div>
+                  <span className="badge" style={{ background: PSE_COLORS[s.pse] + '33', color: PSE_COLORS[s.pse] }}>PSE {s.pse}</span>
+                  {s.rest > 0 && <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 11 }} onClick={() => setTimer({ remaining: s.rest, total: s.rest })}>{s.rest}s</button>}
+                </div>
+              ))}
+            </div>
+          ))}
+
+          {timer && (
+            <div className="timer-overlay">
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>DESCANSO</div>
+                <div className="timer-num" style={{ color: timer.remaining <= 5 ? '#ef4444' : 'var(--primary)' }}>{fmtTime(timer.remaining)}</div>
+              </div>
+              <button className="btn btn-ghost" onClick={() => setTimer(t => ({ ...t, remaining: t.remaining + 15 }))}>+15s</button>
+              <button className="btn btn-danger" onClick={() => setTimer(null)}>Pular</button>
+            </div>
+          )}
+          {modal && <MediaModal media={modal.media} startIndex={modal.i} onClose={() => setModal(null)} />}
+        </div>
+      );
+    }
+
     function WorkoutDetail() {
-      const { activeWorkout, openEdit, deleteWorkout, setView } = useContext(AppCtx);
+      const { activeWorkout, openEdit, openRun, deleteWorkout, setView, history, studentName } = useContext(AppCtx);
       const [modal, setModal] = useState(null);
       const [openEx, setOpenEx] = useState(null);
       const w = activeWorkout;
@@ -498,6 +630,7 @@
       const avgPse = allPse.length ? (allPse.reduce((a, b) => a + b, 0) / allPse.length).toFixed(1) : '-';
       const loads = w.exercises.flatMap(e => e.sets.map(s => parseFloat(s.load) || 0)).filter(v => v > 0);
       const maxLoad = loads.length ? Math.max(...loads) : null;
+      const sessions = history.filter(h => h.workoutId === w.id);
 
       return (
         <div className="container">
@@ -506,32 +639,32 @@
               <button className="btn btn-ghost" onClick={() => setView('dashboard')}>Voltar</button>
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, fontSize: 18 }}>{w.name}</div>
-                {w.category && <span className="badge" style={{ background: 'rgba(249,115,22,0.2)', color: 'var(--primary)' }}>{w.category}</span>}
+                <div className="row wrap" style={{ gap: 6, marginTop: 2 }}>
+                  {w.category && <span className="badge" style={{ background: 'rgba(249,115,22,0.2)', color: 'var(--primary)' }}>{w.category}</span>}
+                  {w.studentId && studentName(w.studentId) && <span className="badge" style={{ background: 'rgba(34,197,94,0.2)', color: 'var(--green)' }}>Aluno: {studentName(w.studentId)}</span>}
+                </div>
               </div>
+              <button className="btn btn-green" onClick={() => openRun(w.id)}>Iniciar</button>
               <button className="btn btn-ghost" onClick={() => openEdit(w.id)}>Editar</button>
               <button className="btn btn-danger" onClick={() => { if (confirm('Excluir treino?')) deleteWorkout(w.id); }}>Excluir</button>
             </div>
           </div>
-
           <div className="row wrap" style={{ gap: 12, marginBottom: 20 }}>
             {[['Exercicios', w.exercises.length], ['Series', totalSets], ['PSE medio', avgPse], ['Carga max', maxLoad ? maxLoad + 'kg' : '-']].map(([l, v]) => (
-              <div key={l} className="card stat-box" style={{ flex: 1, minWidth: 140 }}>
-                <div className="stat-num">{v}</div>
-                <div className="stat-label">{l}</div>
-              </div>
+              <div key={l} className="card stat-box" style={{ flex: 1, minWidth: 140 }}><div className="stat-num">{v}</div><div className="stat-label">{l}</div></div>
             ))}
           </div>
-
           {(w.description || w.weekDays.length > 0) && (
             <div className="card" style={{ padding: 16, marginBottom: 20 }}>
               {w.description && <p style={{ fontSize: 14, color: '#ddd', marginBottom: 10 }}>{w.description}</p>}
-              {w.weekDays.length > 0 && (
-                <div className="row wrap" style={{ gap: 6 }}>
-                  {WEEK_DAYS.map(d => (
-                    <span key={d} className="badge" style={{ background: w.weekDays.includes(d) ? 'var(--primary)' : '#2a2a2a', color: w.weekDays.includes(d) ? '#fff' : '#666' }}>{d}</span>
-                  ))}
-                </div>
-              )}
+              {w.weekDays.length > 0 && <div className="row wrap" style={{ gap: 6 }}>{WEEK_DAYS.map(d => (<span key={d} className="badge" style={{ background: w.weekDays.includes(d) ? 'var(--primary)' : '#2a2a2a', color: w.weekDays.includes(d) ? '#fff' : '#666' }}>{d}</span>))}</div>}
+            </div>
+          )}
+
+          {sessions.length > 0 && (
+            <div className="card" style={{ padding: 16, marginBottom: 20 }}>
+              <strong style={{ fontSize: 14, display: 'block', marginBottom: 12 }}>Progressao de volume (ultimas sessoes)</strong>
+              <ProgressChart sessions={sessions} />
             </div>
           )}
 
@@ -553,11 +686,7 @@
                 <div style={{ padding: 16, borderTop: '1px solid var(--border)' }}>
                   {ex.media.length > 0 && (
                     <div className="row wrap" style={{ gap: 8, marginBottom: 16 }}>
-                      {ex.media.map((m, mi) => (
-                        <div key={m.id} className="media-thumb" onClick={() => setModal({ media: ex.media, i: mi })}>
-                          {m.type === 'video' ? <video src={m.data} muted /> : <img src={m.data} />}
-                        </div>
-                      ))}
+                      {ex.media.map((m, mi) => (<div key={m.id} className="media-thumb" onClick={() => setModal({ media: ex.media, i: mi })}>{m.type === 'video' ? <video src={m.data} muted /> : <img src={m.data} />}</div>))}
                     </div>
                   )}
                   {ex.notes && <p style={{ fontSize: 13, color: '#fbbf24', fontStyle: 'italic', marginBottom: 12 }}>Obs: {ex.notes}</p>}
@@ -566,8 +695,7 @@
                     <tbody>
                       {ex.sets.map((s, si) => (
                         <tr key={s.id}>
-                          <td>{si + 1}</td>
-                          <td style={{ fontWeight: 600 }}>{s.reps || '-'}</td>
+                          <td>{si + 1}</td><td style={{ fontWeight: 600 }}>{s.reps || '-'}</td>
                           <td style={{ fontWeight: 600 }}>{s.load ? s.load + s.unit : '-'}</td>
                           <td style={{ color: 'var(--muted)' }}>{s.rest}s</td>
                           <td><span className="badge" style={{ background: PSE_COLORS[s.pse] + '33', color: PSE_COLORS[s.pse] }}>{s.pse}/10</span></td>
@@ -579,38 +707,243 @@
               )}
             </div>
           ))}
-
           {modal && <MediaModal media={modal.media} startIndex={modal.i} onClose={() => setModal(null)} />}
         </div>
       );
     }
 
+    function ProgressChart({ sessions }) {
+      const data = [...sessions].sort((a, b) => new Date(a.date) - new Date(b.date)).slice(-8);
+      const max = Math.max(...data.map(s => s.volume), 1);
+      return (
+        <div>
+          <div className="chart">
+            {data.map(s => (
+              <div key={s.id} className="chart-bar" style={{ height: (s.volume / max * 100) + '%' }} title={s.volume + ' kg'}>
+                <span>{s.volume}</span>
+              </div>
+            ))}
+          </div>
+          <div className="chart-labels">{data.map(s => <div key={s.id}>{fmtDate(s.date)}</div>)}</div>
+        </div>
+      );
+    }
+
+    /* ============ TELA DE HISTORICO ============ */
+    function HistoryView() {
+      const { history, deleteSession, setView, workouts, studentName } = useContext(AppCtx);
+      const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const sessionStudent = (s) => { const w = workouts.find(x => x.id === s.workoutId); return w ? studentName(w.studentId) : ''; };
+      const totalVol = history.reduce((a, s) => a + s.volume, 0);
+      return (
+        <div className="container">
+          <div className="header-bar">
+            <div className="row">
+              <button className="btn btn-ghost" onClick={() => setView('dashboard')}>Voltar</button>
+              <div style={{ flex: 1 }}><div style={{ fontWeight: 700, fontSize: 18 }}>Historico e Progressao</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>{history.length} sessoes registradas</div></div>
+            </div>
+          </div>
+          {history.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <p style={{ color: 'var(--muted)', marginBottom: 8 }}>Nenhuma sessao registrada ainda.</p>
+              <p style={{ color: 'var(--muted)', fontSize: 13 }}>Abra um treino e clique em "Iniciar" para executar e registrar seu progresso.</p>
+            </div>
+          ) : (
+            <div>
+              <div className="row wrap" style={{ gap: 12, marginBottom: 20 }}>
+                <div className="card stat-box" style={{ flex: 1, minWidth: 140 }}><div className="stat-num">{history.length}</div><div className="stat-label">Sessoes</div></div>
+                <div className="card stat-box" style={{ flex: 1, minWidth: 140 }}><div className="stat-num">{totalVol.toLocaleString('pt-BR')}</div><div className="stat-label">Volume total (kg)</div></div>
+              </div>
+              {sorted.map(s => (
+                <div key={s.id} className="card" style={{ padding: 16, marginBottom: 12 }}>
+                  <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
+                    <div>
+                      <strong>{s.workoutName}</strong>
+                      {sessionStudent(s) && <span className="badge" style={{ background: 'rgba(34,197,94,0.2)', color: 'var(--green)', marginLeft: 8 }}>{sessionStudent(s)}</span>}
+                      <div style={{ fontSize: 12, color: 'var(--muted)' }}>{new Date(s.date).toLocaleString('pt-BR')}</div>
+                    </div>
+                    <button className="btn btn-danger" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => { if (confirm('Remover esta sessao?')) deleteSession(s.id); }}>Remover</button>
+                  </div>
+                  <div className="row wrap" style={{ gap: 16, fontSize: 13, color: 'var(--muted)' }}>
+                    <span>{s.setsDone}/{s.setsTotal} series</span>
+                    <span>Volume: <strong style={{ color: 'var(--text)' }}>{s.volume} kg</strong></span>
+                    <span>PSE medio: <strong style={{ color: PSE_COLORS[Math.round(s.avgPse)] }}>{s.avgPse}</strong></span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ============ TELA DE CONFIG (export/import) ============ */
+    function SettingsView() {
+      const { exportData, importData, setView } = useContext(AppCtx);
+      const fileRef = useRef();
+      const doImport = (mode) => {
+        const f = fileRef.current.files[0];
+        if (!f) { alert('Selecione um arquivo .json primeiro'); return; }
+        const r = new FileReader();
+        r.onload = e => importData(e.target.result, mode);
+        r.readAsText(f);
+      };
+      return (
+        <div className="container">
+          <div className="header-bar">
+            <div className="row">
+              <button className="btn btn-ghost" onClick={() => setView('dashboard')}>Voltar</button>
+              <div style={{ fontWeight: 700, fontSize: 18 }}>Configuracoes</div>
+            </div>
+          </div>
+
+          <div className="card" style={{ padding: 20 }}>
+            <strong style={{ display: 'block', marginBottom: 6 }}>Backup (Exportar / Importar)</strong>
+            <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 14 }}>Salve seus treinos e historico num arquivo, ou restaure de um backup. Use tambem para transferir dados entre dispositivos: exporte num aparelho e importe no outro.</p>
+            <button className="btn btn-primary" style={{ marginBottom: 14 }} onClick={exportData}>Exportar backup (.json)</button>
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 14 }}>
+              <input ref={fileRef} type="file" accept="application/json,.json" className="input" style={{ marginBottom: 10 }} />
+              <div className="row wrap" style={{ gap: 8 }}>
+                <button className="btn btn-ghost" onClick={() => doImport('merge')}>Importar (mesclar)</button>
+                <button className="btn btn-danger" onClick={() => { if (confirm('Substituir TODOS os dados atuais?')) doImport('replace'); }}>Importar (substituir tudo)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    /* ============ TELA DE ALUNOS ============ */
+    function StudentsView() {
+      const { students, workouts, history, saveStudent, deleteStudent, setView, setActiveStudentId } = useContext(AppCtx);
+      const [editing, setEditing] = useState(null); // objeto aluno em edicao/criacao, ou null
+
+      const startNew = () => setEditing(newStudent());
+      const startEdit = (s) => setEditing(clone(s));
+      const up = (f, v) => setEditing(p => ({ ...p, [f]: v }));
+      const doSave = () => {
+        if (!editing.name.trim()) { alert('Informe o nome do aluno'); return; }
+        saveStudent(editing);
+        setEditing(null);
+      };
+      const viewWorkouts = (id) => { setActiveStudentId(id); setView('dashboard'); };
+
+      const sorted = [...students].sort((a, b) => a.name.localeCompare(b.name));
+
+      return (
+        <div className="container">
+          <div className="header-bar">
+            <div className="row">
+              <button className="btn btn-ghost" onClick={() => setView('dashboard')}>Voltar</button>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 18 }}>Alunos</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>{students.length} aluno(s) cadastrado(s)</div>
+              </div>
+              <button className="btn btn-primary" onClick={startNew}>+ Novo aluno</button>
+            </div>
+          </div>
+
+          {students.length === 0 && !editing ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>[ + ]</div>
+              <p style={{ color: 'var(--muted)', marginBottom: 20 }}>Nenhum aluno cadastrado</p>
+              <button className="btn btn-primary" onClick={startNew}>+ Adicionar primeiro aluno</button>
+            </div>
+          ) : (
+            <div className="grid2">
+              {sorted.map(s => {
+                const nW = workouts.filter(w => w.studentId === s.id).length;
+                const nS = history.filter(h => { const w = workouts.find(x => x.id === h.workoutId); return w && w.studentId === s.id; }).length;
+                return (
+                  <div key={s.id} className="card" style={{ overflow: 'hidden' }}>
+                    <div style={{ padding: 16 }}>
+                      <div className="row" style={{ marginBottom: 8 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 18 }}>{s.name.charAt(0).toUpperCase()}</div>
+                        <div style={{ flex: 1 }}>
+                          <strong style={{ fontSize: 16 }}>{s.name}</strong>
+                          {s.goal && <div style={{ fontSize: 12, color: 'var(--primary)' }}>{s.goal}</div>}
+                        </div>
+                      </div>
+                      {s.notes && <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>{s.notes}</p>}
+                      {s.phone && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Tel: {s.phone}</p>}
+                      <div className="row wrap" style={{ gap: 12, fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
+                        <span>{nW} treino(s)</span><span>{nS} sessao(oes)</span>
+                      </div>
+                    </div>
+                    <div className="row" style={{ padding: 12, borderTop: '1px solid var(--border)', justifyContent: 'flex-end', gap: 8 }}>
+                      <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => viewWorkouts(s.id)}>Ver treinos</button>
+                      <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => startEdit(s)}>Editar</button>
+                      <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (confirm('Excluir aluno "' + s.name + '"? Os treinos dele serao mantidos, mas ficarao sem aluno atribuido.')) deleteStudent(s.id); }}>Excluir</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {editing && (
+            <div className="modal-back" onClick={() => setEditing(null)}>
+              <div className="card" style={{ maxWidth: 460, width: '100%', padding: 24 }} onClick={e => e.stopPropagation()}>
+                <strong style={{ fontSize: 18, display: 'block', marginBottom: 16 }}>{editing.name ? 'Editar aluno' : 'Novo aluno'}</strong>
+                <div style={{ marginBottom: 12 }}><span className="label">Nome *</span>
+                  <input className="input" value={editing.name} placeholder="Nome do aluno" onChange={e => up('name', e.target.value)} autoFocus /></div>
+                <div style={{ marginBottom: 12 }}><span className="label">Objetivo</span>
+                  <input className="input" value={editing.goal} placeholder="ex: Hipertrofia, emagrecimento..." onChange={e => up('goal', e.target.value)} /></div>
+                <div style={{ marginBottom: 12 }}><span className="label">Telefone / contato</span>
+                  <input className="input" value={editing.phone} placeholder="(opcional)" onChange={e => up('phone', e.target.value)} /></div>
+                <div style={{ marginBottom: 20 }}><span className="label">Observacoes</span>
+                  <textarea className="input" rows={3} value={editing.notes} placeholder="Restricoes, historico, anotacoes..." onChange={e => up('notes', e.target.value)} /></div>
+                <div className="row" style={{ justifyContent: 'flex-end', gap: 8 }}>
+                  <button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancelar</button>
+                  <button className="btn btn-primary" onClick={doSave}>Salvar aluno</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     function Dashboard() {
-      const { workouts, openNew, openDetail, openEdit, deleteWorkout, duplicateWorkout } = useContext(AppCtx);
+      const { workouts, openNew, openDetail, openEdit, openRun, deleteWorkout, duplicateWorkout, setView, history, students, activeStudentId, setActiveStudentId, studentName } = useContext(AppCtx);
       const [search, setSearch] = useState('');
       const [sort, setSort] = useState('newest');
       const list = useMemo(() => {
         let l = workouts.filter(w => w.name.toLowerCase().includes(search.toLowerCase()));
+        if (activeStudentId) l = l.filter(w => w.studentId === activeStudentId);
         if (sort === 'newest') l = [...l].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         else if (sort === 'name') l = [...l].sort((a, b) => a.name.localeCompare(b.name));
         return l;
-      }, [workouts, search, sort]);
+      }, [workouts, search, sort, activeStudentId]);
       const totalEx = workouts.reduce((a, w) => a + w.exercises.length, 0);
 
       return (
         <div className="container">
           <div style={{ padding: '30px 0 20px' }}>
-            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 20 }}>
-              <div>
-                <h1 style={{ fontSize: 28 }}>WorkoutPro</h1>
-                <p style={{ color: 'var(--muted)', fontSize: 14 }}>Seus treinos de musculacao</p>
-              </div>
+            <div className="row" style={{ justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
+              <div><h1 style={{ fontSize: 28 }}>WorkoutPro</h1><p style={{ color: 'var(--muted)', fontSize: 14 }}>Seus treinos de musculacao</p></div>
               <button className="btn btn-primary" onClick={openNew}>+ Novo treino</button>
             </div>
+            <div className="row wrap" style={{ gap: 8, marginBottom: 16 }}>
+              <button className="navtab active" onClick={() => {}}>Treinos</button>
+              <button className="navtab inactive" onClick={() => setView('students')}>Alunos</button>
+              <button className="navtab inactive" onClick={() => setView('history')}>Historico</button>
+              <button className="navtab inactive" onClick={() => setView('settings')}>Configuracoes</button>
+            </div>
+            {activeStudentId && (
+              <div className="card" style={{ padding: '10px 14px', marginBottom: 16, background: 'rgba(249,115,22,0.12)', borderColor: 'var(--primary)' }}>
+                <div className="row" style={{ justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 14 }}>Mostrando treinos do aluno: <strong style={{ color: 'var(--primary)' }}>{studentName(activeStudentId)}</strong></span>
+                  <button className="btn btn-ghost" style={{ padding: '4px 12px', fontSize: 12 }} onClick={() => setActiveStudentId(null)}>Ver todos</button>
+                </div>
+              </div>
+            )}
             {workouts.length > 0 && (
               <div className="row" style={{ gap: 12 }}>
                 <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{workouts.length}</div><div className="stat-label">Treinos</div></div>
                 <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{totalEx}</div><div className="stat-label">Exercicios</div></div>
+                <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{history.length}</div><div className="stat-label">Sessoes</div></div>
               </div>
             )}
           </div>
@@ -627,14 +960,19 @@
               <div className="row wrap" style={{ gap: 8, marginBottom: 20 }}>
                 <input className="input" style={{ flex: 1, minWidth: 160 }} placeholder="Buscar treino..." value={search} onChange={e => setSearch(e.target.value)} />
                 <select className="input" style={{ width: 160 }} value={sort} onChange={e => setSort(e.target.value)}>
-                  <option value="newest">Mais recentes</option>
-                  <option value="name">Nome (A-Z)</option>
+                  <option value="newest">Mais recentes</option><option value="name">Nome (A-Z)</option>
                 </select>
               </div>
+              {list.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
+                  Nenhum treino encontrado{activeStudentId ? ' para este aluno' : ''}.
+                </div>
+              )}
               <div className="grid2">
                 {list.map(w => {
                   const sets = w.exercises.reduce((a, e) => a + e.sets.length, 0);
                   const media = w.exercises.reduce((a, e) => a + e.media.length, 0);
+                  const sess = history.filter(h => h.workoutId === w.id).length;
                   return (
                     <div key={w.id} className="card" style={{ overflow: 'hidden' }}>
                       <div className="clickable" style={{ padding: 16 }} onClick={() => openDetail(w.id)}>
@@ -642,19 +980,16 @@
                           <strong style={{ fontSize: 16 }}>{w.name}</strong>
                           {w.category && <span className="badge" style={{ background: 'rgba(249,115,22,0.2)', color: 'var(--primary)' }}>{w.category}</span>}
                         </div>
+                        {w.studentId && studentName(w.studentId) && <div style={{ marginBottom: 8 }}><span className="badge" style={{ background: 'rgba(34,197,94,0.2)', color: 'var(--green)' }}>Aluno: {studentName(w.studentId)}</span></div>}
                         {w.description && <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 10 }}>{w.description}</p>}
-                        {w.weekDays.length > 0 && (
-                          <div className="row wrap" style={{ gap: 4, marginBottom: 10 }}>
-                            {w.weekDays.map(d => <span key={d} className="badge" style={{ background: 'var(--primary)', color: '#fff' }}>{d}</span>)}
-                          </div>
-                        )}
+                        {w.weekDays.length > 0 && <div className="row wrap" style={{ gap: 4, marginBottom: 10 }}>{w.weekDays.map(d => <span key={d} className="badge" style={{ background: 'var(--primary)', color: '#fff' }}>{d}</span>)}</div>}
                         <div className="row wrap" style={{ gap: 12, fontSize: 12, color: 'var(--muted)' }}>
-                          <span>{w.exercises.length} exercicios</span>
-                          <span>{sets} series</span>
-                          {media > 0 && <span>{media} midias</span>}
+                          <span>{w.exercises.length} exercicios</span><span>{sets} series</span>
+                          {media > 0 && <span>{media} midias</span>}{sess > 0 && <span>{sess} sessoes</span>}
                         </div>
                       </div>
                       <div className="row" style={{ padding: 12, borderTop: '1px solid var(--border)', justifyContent: 'flex-end', gap: 8 }}>
+                        <button className="btn btn-green" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => openRun(w.id)}>Iniciar</button>
                         <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => openEdit(w.id)}>Editar</button>
                         <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => duplicateWorkout(w.id)}>Duplicar</button>
                         <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (confirm('Excluir "' + w.name + '"?')) deleteWorkout(w.id); }}>Excluir</button>
@@ -676,6 +1011,10 @@
           {view === 'dashboard' && <Dashboard />}
           {view === 'form' && <WorkoutForm />}
           {view === 'detail' && <WorkoutDetail />}
+          {view === 'run' && <RunMode />}
+          {view === 'history' && <HistoryView />}
+          {view === 'students' && <StudentsView />}
+          {view === 'settings' && <SettingsView />}
           <Toast toast={toast} />
         </div>
       );
@@ -683,14 +1022,11 @@
 
     try {
       if (!window.React || !window.ReactDOM) throw new Error('Bibliotecas React nao carregaram. Verifique sua conexao com a internet.');
-      ReactDOM.createRoot(document.getElementById('root')).render(
-        <AppProvider><App /></AppProvider>
-      );
+      ReactDOM.createRoot(document.getElementById('root')).render(<AppProvider><App /></AppProvider>);
     } catch (err) {
       document.getElementById('root').innerHTML =
         '<div style="padding:40px;text-align:center;max-width:500px;margin:60px auto">' +
-        '<h2 style="color:#f97316">Erro ao carregar o app</h2>' +
-        '<p style="color:#aaa">' + err.message + '</p></div>';
+        '<h2 style="color:#f97316">Erro ao carregar o app</h2><p style="color:#aaa">' + err.message + '</p></div>';
       console.error(err);
     }
   </script>
