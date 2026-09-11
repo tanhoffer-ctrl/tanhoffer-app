@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💪 WorkoutPro — Meus Treinos</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50:'#fff7ed', 100:'#ffedd5', 200:'#fed7aa', 300:'#fdba74', 400:'#fb923c', 500:'#f97316', 600:'#ea580c', 700:'#c2410c', 800:'#9a3412', 900:'#7c2d12' },
+          },
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: #0f0f0f; color: #f5f5f5; min-height: 100vh; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #1a1a1a; }
+    ::-webkit-scrollbar-thumb { background: #f97316; border-radius: 3px; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(249,115,22,0.2); }
+    input[type=range] { -webkit-appearance: none; height: 6px; border-radius: 3px; background: #333; outline: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #f97316; cursor: pointer; }
+    input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #f97316; cursor: pointer; border: none; }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .media-thumb { position: relative; overflow: hidden; border-radius: 8px; }
+    .media-thumb:hover .media-overlay { opacity: 1; }
+    .media-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
+    video { max-width: 100%; border-radius: 8px; }
+    .pse-bar { display: flex; gap: 4px; }
+    .pse-block { flex: 1; height: 8px; border-radius: 2px; transition: all 0.15s; cursor: pointer; }
+    .drag-over { border-color: #f97316 !important; background: rgba(249,115,22,0.1) !important; }
+    .tab-active { border-bottom: 2px solid #f97316; color: #f97316; }
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .modal-backdrop { position: fixed; inset:0; background: rgba(0,0,0,0.8); backdrop-filter: blur(4px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+    const { useState, useEffect, useContext, createContext, useRef, useCallback, useMemo } = React;
+
+    /* ─────────────────────────── CONSTANTES ─────────────────────────── */
+    const MUSCLE_GROUPS = ['Peito','Costas','Ombros','Bíceps','Tríceps','Antebraço','Abdômen','Glúteos','Quadríceps','Posterior de coxa','Panturrilha','Full Body'];
+    const EQUIPMENT = ['Barra','Halter','Máquina','Cabo','Elástico','Peso Corporal','Smith','Kettlebell','TRX','Anilha'];
+    const PSE_LABELS = {0:'Sem esforço',1:'Muito leve',2:'Leve',3:'Moderado',4:'Pouco intenso',5:'Intenso',6:'Bem intenso',7:'Muito intenso',8:'Extremamente intenso',9:'Máximo quase',10:'Máximo absoluto'};
+    const PSE_COLORS = ['#4ade80','#86efac','#a3e635','#bef264','#facc15','#fb923c','#f97316','#ef4444','#dc2626','#b91c1c','#7f1d1d'];
+    const WEEK_DAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+
+    /* ─────────────────────────── UTILITÁRIOS ─────────────────────────── */
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const cloneDeep = (obj) => JSON.parse(JSON.stringify(obj));
+    const fmt = (n) => n?.toString().padStart(2,'0') ?? '00';
+
+    function fileToBase64(file) {
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = e => res(e.target.result);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    /* ─────────────────────────── MODELOS PADRÃO ─────────────────────────── */
+    const newSet = () => ({ id: uid(), reps: '', load: '', unit: 'kg', pse: 7, rest: 60, completed: false });
+    const newExercise = () => ({
+      id: uid(), name: '', muscleGroup: '', equipment: '', notes: '',
+      sets: [newSet()], media: []
+    });
+    const newWorkout = () => ({
+      id: uid(), name: '', description: '', weekDays: [],
+      category: '', createdAt: new Date().toISOString(), exercises: []
+    });
+
+    /* ─────────────────────────── CONTEXTO ─────────────────────────── */
+    const AppCtx = createContext(null);
+
+    function AppProvider({ children }) {
+      const [workouts, setWorkouts] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('workouts') || '[]'); } catch { return []; }
+      });
+      const [view, setView] = useState('dashboard'); // dashboard | form | detail
+      const [activeId, setActiveId] = useState(null);
+      const [toast, setToast] = useState(null);
+
+      useEffect(() => { localStorage.setItem('workouts', JSON.stringify(workouts)); }, [workouts]);
+
+      const showToast = (msg, type='success') => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 2800);
+      };
+
+      const saveWorkout = (workout) => {
+        setWorkouts(prev => {
+          const exists = prev.find(w => w.id === workout.id);
+          return exists ? prev.map(w => w.id === workout.id ? workout : w) : [...prev, workout];
+        });
+        showToast(workout.name ? `"${workout.name}" salvo!` : 'Treino salvo!');
+        setView('dashboard');
+      };
+
+      const deleteWorkout = (id) => {
+        setWorkouts(prev => prev.filter(w => w.id !== id));
+        showToast('Treino excluído', 'error');
+        if (view === 'detail' && activeId === id) setView('dashboard');
+      };
+
+      const duplicateWorkout = (id) => {
+        const original = workouts.find(w => w.id === id);
+        if (!original) return;
+        const copy = { ...cloneDeep(original), id: uid(), name: original.name + ' (cópia)', createdAt: new Date().toISOString() };
+        setWorkouts(prev => [...prev, copy]);
+        showToast(`"${copy.name}" criado!`);
+      };
+
+      const openNew = () => { setActiveId(null); setView('form'); };
+      const openEdit = (id) => { setActiveId(id); setView('form'); };
+      const openDetail = (id) => { setActiveId(id); setView('detail'); };
+
+      const activeWorkout = useMemo(() => workouts.find(w => w.id === activeId) || null, [workouts, activeId]);
+
+      return (
+        <AppCtx.Provider value={{ workouts, saveWorkout, deleteWorkout, duplicateWorkout, view, setView, activeId, activeWorkout, openNew, openEdit, openDetail, toast }}>
+          {children}
+        </AppCtx.Provider>
+      );
+    }
+
+    /* ─────────────────────────── TOAST ─────────────────────────── */
+    function Toast({ toast }) {
+      if (!toast) return null;
+      const isErr = toast.type === 'error';
+      return (
+        <div className="fixed bottom-6 right-6 z-50 fade-in">
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl ${isErr ? 'bg-red-900 border border-red-700' : 'bg-primary-600 border border-primary-500'}`}>
+            <span>{isErr ? '🗑️' : '✅'}</span>
+            <span className="text-sm font-medium text-white">{toast.msg}</span>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── PSE SELECTOR ─────────────────────────── */
+    function PSESelector({ value, onChange }) {
+      return (
+        <div>
+          <div className="pse-bar mb-2">
+            {Array.from({length:11},(_,i) => (
+              <div key={i} className="pse-block" style={{ background: i <= value ? PSE_COLORS[i] : '#2a2a2a', transform: i === value ? 'scaleY(1.6)' : 'scaleY(1)' }} onClick={() => onChange(i)} title={PSE_LABELS[i]} />
+            ))}
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-gray-400">PSE</span>
+            <span className="text-xs font-semibold" style={{color: PSE_COLORS[value]}}>
+              {value}/10 — {PSE_LABELS[value]}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── MEDIA UPLOAD ─────────────────────────── */
+    function MediaUpload({ media, onAdd, onRemove }) {
+      const inputRef = useRef();
+      const [dragging, setDragging] = useState(false);
+
+      const handleFiles = async (files) => {
+        for (const file of Array.from(files)) {
+          if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) continue;
+          const data = await fileToBase64(file);
+          onAdd({ id: uid(), type: file.type.startsWith('video/') ? 'video' : 'image', data, name: file.name });
+        }
+      };
+
+      const onDrop = e => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); };
+
+      return (
+        <div>
+          <div
+            className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${dragging ? 'drag-over' : 'border-gray-700 hover:border-primary-500'}`}
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            onClick={() => inputRef.current.click()}
+          >
+            <div className="text-2xl mb-1">📎</div>
+            <p className="text-xs text-gray-400">Clique ou arraste fotos/vídeos</p>
+            <input ref={inputRef} type="file" accept="image/*,video/*" multiple hidden onChange={e => handleFiles(e.target.files)} />
+          </div>
+          {media.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {media.map(m => (
+                <div key={m.id} className="media-thumb w-20 h-20 bg-gray-800">
+                  {m.type === 'video'
+                    ? <video src={m.data} className="w-full h-full object-cover" muted />
+                    : <img src={m.data} alt={m.name} className="w-full h-full object-cover" />
+                  }
+                  <div className="media-overlay">
+                    <button onClick={(e) => { e.stopPropagation(); onRemove(m.id); }} className="text-white text-lg bg-red-600 rounded-full w-7 h-7 flex items-center justify-center">×</button>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-center py-0.5">
+                    <span className="text-xs">{m.type === 'video' ? '🎬' : '🖼️'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── MEDIA VIEWER MODAL ─────────────────────────── */
+    function MediaModal({ media, startIndex, onClose }) {
+      const [idx, setIdx] = useState(startIndex);
+      const current = media[idx];
+      useEffect(() => {
+        const handler = e => { if(e.key==='Escape') onClose(); if(e.key==='ArrowRight') setIdx(i=>Math.min(i+1,media.length-1)); if(e.key==='ArrowLeft') setIdx(i=>Math.max(i-1,0)); };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+      }, []);
+      if (!current) return null;
+      return (
+        <div className="modal-backdrop" onClick={onClose}>
+          <div className="relative max-w-3xl w-full" onClick={e=>e.stopPropagation()}>
+            <button onClick={onClose} className="absolute -top-10 right-0 text-white text-2xl hover:text-primary-400">✕</button>
+            {current.type === 'video'
+              ? <video src={current.data} controls autoPlay className="w-full rounded-xl max-h-[75vh] bg-black" />
+              : <img src={current.data} alt={current.name} className="w-full rounded-xl max-h-[75vh] object-contain bg-black" />
+            }
+            {media.length > 1 && (
+              <div className="flex justify-between mt-3">
+                <button onClick={()=>setIdx(i=>Math.max(i-1,0))} disabled={idx===0} className="px-4 py-2 bg-gray-800 rounded-lg text-sm disabled:opacity-30 hover:bg-gray-700">← Anterior</button>
+                <span className="text-sm text-gray-400">{idx+1} / {media.length}</span>
+                <button onClick={()=>setIdx(i=>Math.min(i+1,media.length-1))} disabled={idx===media.length-1} className="px-4 py-2 bg-gray-800 rounded-lg text-sm disabled:opacity-30 hover:bg-gray-700">Próximo →</button>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── SET ROW ─────────────────────────── */
+    function SetRow({ set, index, onChange, onDelete, canDelete }) {
+      const update = (field, val) => onChange({ ...set, [field]: val });
+      return (
+        <div className="glass rounded-xl p-3 mb-2 fade-in">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-full bg-primary-600 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">{index+1}</div>
+            <div className="flex items-center gap-2 flex-1 flex-wrap">
+              <div className="flex flex-col gap-0.5 min-w-[70px]">
+                <label className="text-xs text-gray-500">Repetições</label>
+                <input type="text" value={set.reps} onChange={e=>update('reps',e.target.value)} placeholder="ex: 12" className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-sm text-white w-full focus:outline-none focus:border-primary-500" />
+              </div>
+              <div className="flex flex-col gap-0.5 min-w-[80px]">
+                <label className="text-xs text-gray-500">Carga</label>
+                <div className="flex">
+                  <input type="text" value={set.load} onChange={e=>update('load',e.target.value)} placeholder="0" className="bg-gray-800 border border-gray-700 rounded-l-lg px-2 py-1.5 text-sm text-white w-16 focus:outline-none focus:border-primary-500 border-r-0" />
+                  <select value={set.unit} onChange={e=>update('unit',e.target.value)} className="bg-gray-700 border border-gray-700 rounded-r-lg px-1 py-1.5 text-xs text-white focus:outline-none">
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                    <option value="%">%</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex flex-col gap-0.5 min-w-[80px]">
+                <label className="text-xs text-gray-500">Descanso (s)</label>
+                <input type="number" value={set.rest} onChange={e=>update('rest',parseInt(e.target.value)||0)} min={0} step={15} className="bg-gray-800 border border-gray-700 rounded-lg px-2 py-1.5 text-sm text-white w-full focus:outline-none focus:border-primary-500" />
+              </div>
+            </div>
+            {canDelete && (
+              <button onClick={onDelete} className="text-red-500 hover:text-red-400 text-lg flex-shrink-0">🗑️</button>
+            )}
+          </div>
+          <PSESelector value={set.pse} onChange={v=>update('pse',v)} />
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── EXERCISE CARD (EDIÇÃO) ─────────────────────────── */
+    function ExerciseCard({ exercise, index, onChange, onDelete }) {
+      const [expanded, setExpanded] = useState(true);
+      const update = (field, val) => onChange({ ...exercise, [field]: val });
+      const updateSet = (setId, updated) => update('sets', exercise.sets.map(s => s.id === setId ? updated : s));
+      const addSet = () => update('sets', [...exercise.sets, newSet()]);
+      const removeSet = (setId) => update('sets', exercise.sets.filter(s => s.id !== setId));
+      const addMedia = (m) => update('media', [...exercise.media, m]);
+      const removeMedia = (mid) => update('media', exercise.media.filter(m => m.id !== mid));
+
+      const avgPSE = exercise.sets.length ? (exercise.sets.reduce((a,s)=>a+s.pse,0)/exercise.sets.length).toFixed(1) : '-';
+      const totalSets = exercise.sets.length;
+      const hasMedia = exercise.media.length > 0;
+
+      return (
+        <div className="glass rounded-2xl overflow-hidden mb-4 fade-in">
+          <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={()=>setExpanded(e=>!e)}>
+            <div className="w-9 h-9 rounded-xl bg-primary-600/20 border border-primary-600/40 flex items-center justify-center text-primary-400 font-bold text-sm flex-shrink-0">{index+1}</div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-white truncate">{exercise.name || <span className="text-gray-500 italic">Exercício sem nome</span>}</h3>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                {exercise.muscleGroup && <span className="badge bg-blue-900/40 text-blue-300 border border-blue-700/40">{exercise.muscleGroup}</span>}
+                <span className="text-xs text-gray-500">{totalSets} séries</span>
+                <span className="text-xs text-gray-500">PSE ≈ {avgPSE}</span>
+                {hasMedia && <span className="text-xs">📎 {exercise.media.length}</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={e=>{e.stopPropagation();onDelete();}} className="text-red-500 hover:text-red-400 text-sm px-2 py-1 rounded-lg hover:bg-red-900/20">🗑️</button>
+              <span className="text-gray-500 text-lg">{expanded ? '▲' : '▼'}</span>
+            </div>
+          </div>
+
+          {expanded && (
+            <div className="px-4 pb-4 border-t border-white/5 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Nome do exercício *</label>
+                  <input value={exercise.name} onChange={e=>update('name',e.target.value)} placeholder="ex: Supino Reto com Barra" className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary-500" />
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Grupo muscular</label>
+                  <select value={exercise.muscleGroup} onChange={e=>update('muscleGroup',e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary-500">
+                    <option value="">Selecionar...</option>
+                    {MUSCLE_GROUPS.map(g=><option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Equipamento</label>
+                  <select value={exercise.equipment} onChange={e=>update('equipment',e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary-500">
+                    <option value="">Selecionar...</option>
+                    {EQUIPMENT.map(eq=><option key={eq} value={eq}>{eq}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Observações</label>
+                  <input value={exercise.notes} onChange={e=>update('notes',e.target.value)} placeholder="Técnica, dicas..." className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-primary-500" />
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-semibold text-gray-300">🔢 Séries & Cargas</h4>
+                  <button onClick={addSet} className="text-xs px-3 py-1.5 bg-primary-600 hover:bg-primary-500 rounded-lg text-white font-medium">+ Adicionar série</button>
+                </div>
+                {exercise.sets.map((set, i) => (
+                  <SetRow key={set.id} set={set} index={i} onChange={upd=>updateSet(set.id,upd)} onDelete={()=>removeSet(set.id)} canDelete={exercise.sets.length>1} />
+                ))}
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-gray-300 mb-2">📷 Fotos / Vídeos Demonstrativos</h4>
+                <MediaUpload media={exercise.media} onAdd={addMedia} onRemove={removeMedia} />
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── FORM (CRIAR/EDITAR) ─────────────────────────── */
+    function WorkoutForm() {
+      const { activeWorkout, saveWorkout, setView } = useContext(AppCtx);
+      const [workout, setWorkout] = useState(() => activeWorkout ? cloneDeep(activeWorkout) : newWorkout());
+      const [tab, setTab] = useState('info');
+      const [errors, setErrors] = useState({});
+
+      const update = (field, val) => setWorkout(w => ({ ...w, [field]: val }));
+      const toggleDay = (d) => update('weekDays', workout.weekDays.includes(d) ? workout.weekDays.filter(x=>x!==d) : [...workout.weekDays, d]);
+      const addExercise = () => { update('exercises', [...workout.exercises, newExercise()]); setTab('exercises'); };
+      const updateExercise = (id, updated) => update('exercises', workout.exercises.map(e => e.id === id ? updated : e));
+      const deleteExercise = (id) => update('exercises', workout.exercises.filter(e => e.id !== id));
+      const moveExercise = (id, dir) => {
+        const arr = [...workout.exercises];
+        const i = arr.findIndex(e=>e.id===id);
+        const j = i + dir;
+        if (j < 0 || j >= arr.length) return;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+        update('exercises', arr);
+      };
+
+      const validate = () => {
+        const e = {};
+        if (!workout.name.trim()) e.name = 'Nome obrigatório';
+        if (workout.exercises.length === 0) e.exercises = 'Adicione pelo menos 1 exercício';
+        workout.exercises.forEach((ex, i) => { if (!ex.name.trim()) e[`ex_${ex.id}`] = `Exercício ${i+1} sem nome`; });
+        setErrors(e);
+        return Object.keys(e).length === 0;
+      };
+
+      const handleSave = () => { if (validate()) saveWorkout(workout); else setTab(errors.name ? 'info' : 'exercises'); };
+
+      const totalSets = workout.exercises.reduce((a,e)=>a+e.sets.length,0);
+      const totalMedia = workout.exercises.reduce((a,e)=>a+e.media.length,0);
+
+      return (
+        <div className="min-h-screen">
+          {/* Header */}
+          <div className="sticky top-0 z-40 bg-black/80 backdrop-blur border-b border-white/5">
+            <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+              <button onClick={()=>setView('dashboard')} className="text-gray-400 hover:text-white text-2xl flex-shrink-0">←</button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-bold text-white truncate">{workout.name || (activeWorkout ? 'Editar treino' : 'Novo treino')}</h1>
+                <p className="text-xs text-gray-500">{workout.exercises.length} exercícios · {totalSets} séries · {totalMedia} mídias</p>
+              </div>
+              <button onClick={handleSave} className="px-4 py-2 bg-primary-600 hover:bg-primary-500 rounded-xl text-white text-sm font-semibold flex-shrink-0">💾 Salvar</button>
+            </div>
+            {/* Tabs */}
+            <div className="max-w-4xl mx-auto px-4 flex gap-6 border-t border-white/5">
+              {['info','exercises'].map(t=>(
+                <button key={t} onClick={()=>setTab(t)} className={`py-2.5 text-sm font-medium transition-all border-b-2 ${tab===t ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-300'}`}>
+                  {t==='info' ? '📋 Informações' : `💪 Exercícios (${workout.exercises.length})`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="max-w-4xl mx-auto px-4 py-6">
+            {/* ERRORS */}
+            {Object.keys(errors).length > 0 && (
+              <div className="bg-red-900/30 border border-red-700/50 rounded-xl p-3 mb-4 fade-in">
+                {Object.values(errors).map((e,i)=><p key={i} className="text-red-400 text-sm">⚠️ {e}</p>)}
+              </div>
+            )}
+
+            {/* TAB: INFO */}
+            {tab === 'info' && (
+              <div className="fade-in space-y-4">
+                <div className="glass rounded-2xl p-5">
+                  <h2 className="text-sm font-semibold text-gray-400 mb-4 uppercase tracking-wider">Dados do Treino</h2>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Nome do treino *</label>
+                      <input value={workout.name} onChange={e=>update('name',e.target.value)} placeholder="ex: Treino A — Peito e Tríceps" className={`w-full bg-gray-800 border rounded-xl px-3 py-3 text-white focus:outline-none focus:border-primary-500 ${errors.name ? 'border-red-600' : 'border-gray-700'}`} />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Descrição / objetivo</label>
+                      <textarea value={workout.description} onChange={e=>update('description',e.target.value)} placeholder="Objetivo deste treino, nível de intensidade..." rows={3} className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-primary-500 resize-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-gray-400 mb-1 block">Categoria</label>
+                      <select value={workout.category} onChange={e=>update('category',e.target.value)} className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-3 text-white focus:outline-none focus:border-primary-500">
+                        <option value="">Selecionar...</option>
+                        {['Hipertrofia','Força','Resistência','Emagrecimento','Funcional','Reabilitação','Potência'].map(c=><option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass rounded-2xl p-5">
+                  <h2 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wider">📅 Dias da Semana</h2>
+                  <div className="flex gap-2 flex-wrap">
+                    {WEEK_DAYS.map(d=>(
+                      <button key={d} onClick={()=>toggleDay(d)} className={`px-3 py-2 rounded-xl text-sm font-semibold border transition-all ${workout.weekDays.includes(d) ? 'bg-primary-600 border-primary-500 text-white' : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500'}`}>{d}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB: EXERCISES */}
+            {tab === 'exercises' && (
+              <div className="fade-in">
+                {errors.exercises && <div className="bg-red-900/30 border border-red-700/50 rounded-xl p-3 mb-4"><p className="text-red-400 text-sm">⚠️ {errors.exercises}</p></div>}
+                {workout.exercises.length === 0
+                  ? (
+                    <div className="text-center py-16">
+                      <div className="text-6xl mb-4">🏋️</div>
+                      <p className="text-gray-400 mb-6">Nenhum exercício adicionado ainda</p>
+                      <button onClick={addExercise} className="px-6 py-3 bg-primary-600 hover:bg-primary-500 rounded-xl text-white font-semibold">+ Adicionar primeiro exercício</button>
+                    </div>
+                  ) : (
+                    <>
+                      {workout.exercises.map((ex, i) => (
+                        <div key={ex.id} className="relative">
+                          {workout.exercises.length > 1 && (
+                            <div className="absolute -left-1 top-4 flex flex-col gap-1 z-10">
+                              <button onClick={()=>moveExercise(ex.id,-1)} disabled={i===0} className="w-5 h-5 bg-gray-700 rounded text-xs disabled:opacity-30 hover:bg-gray-600 flex items-center justify-center">▲</button>
+                              <button onClick={()=>moveExercise(ex.id,1)} disabled={i===workout.exercises.length-1} className="w-5 h-5 bg-gray-700 rounded text-xs disabled:opacity-30 hover:bg-gray-600 flex items-center justify-center">▼</button>
+                            </div>
+                          )}
+                          <div className={workout.exercises.length > 1 ? 'ml-6' : ''}>
+                            <ExerciseCard exercise={ex} index={i} onChange={updated=>updateExercise(ex.id,updated)} onDelete={()=>deleteExercise(ex.id)} />
+                          </div>
+                        </div>
+                      ))}
+                      <button onClick={addExercise} className="w-full py-3 border-2 border-dashed border-gray-700 hover:border-primary-500 rounded-2xl text-gray-500 hover:text-primary-400 transition-all text-sm font-medium">+ Adicionar exercício</button>
+                    </>
+                  )
+                }
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── DETAIL VIEW ─────────────────────────── */
+    function WorkoutDetail() {
+      const { activeWorkout, openEdit, deleteWorkout, setView } = useContext(AppCtx);
+      const [modalMedia, setModalMedia] = useState(null);
+      const [activeEx, setActiveEx] = useState(null);
+      const w = activeWorkout;
+      if (!w) return null;
+
+      const totalSets = w.exercises.reduce((a,e)=>a+e.sets.length,0);
+      const totalMedia = w.exercises.reduce((a,e)=>a+e.media.length,0);
+      const allLoads = w.exercises.flatMap(e=>e.sets.map(s=>parseFloat(s.load)||0)).filter(v=>v>0);
+      const maxLoad = allLoads.length ? Math.max(...allLoads) : null;
+      const avgPSE = (() => { const all=w.exercises.flatMap(e=>e.sets.map(s=>s.pse)); return all.length ? (all.reduce((a,b)=>a+b,0)/all.length).toFixed(1) : '-'; })();
+
+      return (
+        <div className="min-h-screen">
+          {/* Header */}
+          <div className="sticky top-0 z-40 bg-black/80 backdrop-blur border-b border-white/5">
+            <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-3">
+              <button onClick={()=>setView('dashboard')} className="text-gray-400 hover:text-white text-2xl flex-shrink-0">←</button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-lg font-bold text-white truncate">{w.name}</h1>
+                {w.category && <span className="badge bg-primary-900/40 text-primary-300 border border-primary-700/40 text-xs">{w.category}</span>}
+              </div>
+              <button onClick={()=>openEdit(w.id)} className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-xl text-white text-sm">✏️ Editar</button>
+              <button onClick={()=>{ if(confirm('Excluir treino?')) deleteWorkout(w.id); }} className="px-3 py-1.5 bg-red-900/40 hover:bg-red-900/70 rounded-xl text-red-400 text-sm">🗑️</button>
+            </div>
+          </div>
+
+          <div className="max-w-4xl mx-auto px-4 py-6">
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {[
+                { label:'Exercícios', value: w.exercises.length, icon:'🏋️' },
+                { label:'Total séries', value: totalSets, icon:'🔢' },
+                { label:'PSE médio', value: avgPSE, icon:'💢', color: PSE_COLORS[Math.round(parseFloat(avgPSE))] },
+                { label:'Carga máx.', value: maxLoad ? `${maxLoad}kg` : '—', icon:'⚡' },
+              ].map(stat=>(
+                <div key={stat.label} className="glass rounded-2xl p-4 text-center">
+                  <div className="text-2xl mb-1">{stat.icon}</div>
+                  <div className="text-2xl font-bold" style={stat.color?{color:stat.color}:{}}>{stat.value}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Info */}
+            {(w.description || w.weekDays?.length > 0) && (
+              <div className="glass rounded-2xl p-4 mb-6">
+                {w.description && <p className="text-gray-300 text-sm mb-3">{w.description}</p>}
+                {w.weekDays?.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {WEEK_DAYS.map(d=>(
+                      <span key={d} className={`px-2 py-1 rounded-lg text-xs font-semibold ${w.weekDays.includes(d) ? 'bg-primary-600 text-white' : 'bg-gray-800 text-gray-600'}`}>{d}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Exercises */}
+            <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Exercícios</h2>
+            {w.exercises.map((ex, ei) => (
+              <div key={ex.id} className="glass rounded-2xl overflow-hidden mb-4">
+                <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={()=>setActiveEx(activeEx===ex.id?null:ex.id)}>
+                  <div className="w-9 h-9 rounded-xl bg-primary-600/20 border border-primary-600/40 flex items-center justify-center text-primary-400 font-bold text-sm flex-shrink-0">{ei+1}</div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white">{ex.name}</h3>
+                    <div className="flex gap-2 mt-0.5 flex-wrap">
+                      {ex.muscleGroup && <span className="badge bg-blue-900/40 text-blue-300 border border-blue-700/40">{ex.muscleGroup}</span>}
+                      {ex.equipment && <span className="badge bg-purple-900/40 text-purple-300 border border-purple-700/40">{ex.equipment}</span>}
+                      <span className="text-xs text-gray-500">{ex.sets.length}×{ex.sets[0]?.reps||'?'}</span>
+                    </div>
+                  </div>
+                  {ex.media.length>0 && <span className="text-xs text-gray-500">📎 {ex.media.length}</span>}
+                  <span className="text-gray-600">{activeEx===ex.id?'▲':'▼'}</span>
+                </div>
+
+                {activeEx === ex.id && (
+                  <div className="px-4 pb-4 border-t border-white/5 pt-4 fade-in">
+                    {/* Media */}
+                    {ex.media.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 mb-2">Mídias demonstrativas</p>
+                        <div className="flex flex-wrap gap-2">
+                          {ex.media.map((m,mi)=>(
+                            <div key={m.id} className="media-thumb w-20 h-20 cursor-pointer bg-gray-800" onClick={()=>setModalMedia({media:ex.media,startIndex:mi})}>
+                              {m.type==='video' ? <video src={m.data} className="w-full h-full object-cover" muted /> : <img src={m.data} alt={m.name} className="w-full h-full object-cover" />}
+                              <div className="media-overlay"><span className="text-2xl">{m.type==='video'?'▶️':'🔍'}</span></div>
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-center py-0.5"><span className="text-xs">{m.type==='video'?'🎬':'🖼️'}</span></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Notes */}
+                    {ex.notes && <p className="text-xs text-yellow-400/80 mb-3 italic">📝 {ex.notes}</p>}
+                    {/* Sets Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-gray-500 text-xs border-b border-white/5">
+                            <th className="pb-2 text-left">Série</th><th className="pb-2 text-center">Reps</th><th className="pb-2 text-center">Carga</th><th className="pb-2 text-center">Descanso</th><th className="pb-2 text-center">PSE</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ex.sets.map((s,si)=>(
+                            <tr key={s.id} className="border-b border-white/5 hover:bg-white/3">
+                              <td className="py-2"><span className="w-6 h-6 rounded-full bg-primary-600/20 text-primary-400 text-xs font-bold inline-flex items-center justify-center">{si+1}</span></td>
+                              <td className="py-2 text-center font-medium text-white">{s.reps||'—'}</td>
+                              <td className="py-2 text-center font-medium text-white">{s.load?`${s.load}${s.unit}`:'—'}</td>
+                              <td className="py-2 text-center text-gray-400">{s.rest}s</td>
+                              <td className="py-2 text-center"><span className="badge font-bold" style={{color:PSE_COLORS[s.pse],background:`${PSE_COLORS[s.pse]}22`,border:`1px solid ${PSE_COLORS[s.pse]}44`}}>{s.pse}/10</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Media Modal */}
+          {modalMedia && <MediaModal media={modalMedia.media} startIndex={modalMedia.startIndex} onClose={()=>setModalMedia(null)} />}
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── DASHBOARD ─────────────────────────── */
+    function Dashboard() {
+      const { workouts, openNew, openDetail, openEdit, deleteWorkout, duplicateWorkout } = useContext(AppCtx);
+      const [search, setSearch] = useState('');
+      const [filterDay, setFilterDay] = useState('');
+      const [filterCat, setFilterCat] = useState('');
+      const [sortBy, setSortBy] = useState('newest');
+
+      const filtered = useMemo(() => {
+        let list = [...workouts];
+        if (search) list = list.filter(w => w.name.toLowerCase().includes(search.toLowerCase()) || w.description?.toLowerCase().includes(search.toLowerCase()));
+        if (filterDay) list = list.filter(w => w.weekDays?.includes(filterDay));
+        if (filterCat) list = list.filter(w => w.category === filterCat);
+        if (sortBy==='newest') list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+        else if (sortBy==='oldest') list.sort((a,b)=>new Date(a.createdAt)-new Date(b.createdAt));
+        else if (sortBy==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+        else if (sortBy==='exercises') list.sort((a,b)=>b.exercises.length-a.exercises.length);
+        return list;
+      }, [workouts, search, filterDay, filterCat, sortBy]);
+
+      const categories = [...new Set(workouts.map(w=>w.category).filter(Boolean))];
+      const totalExercises = workouts.reduce((a,w)=>a+w.exercises.length,0);
+      const totalMedia = workouts.reduce((a,w)=>a+w.exercises.reduce((b,e)=>b+e.media.length,0),0);
+
+      return (
+        <div className="min-h-screen">
+          {/* Hero Header */}
+          <div className="bg-gradient-to-b from-primary-900/20 to-transparent border-b border-white/5 px-4 py-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h1 className="text-3xl font-extrabold text-white mb-1">💪 WorkoutPro</h1>
+                  <p className="text-gray-400 text-sm">Seus treinos de musculação</p>
+                </div>
+                <button onClick={openNew} className="px-4 py-2.5 bg-primary-600 hover:bg-primary-500 rounded-xl text-white font-semibold text-sm shadow-lg shadow-primary-600/20">+ Novo treino</button>
+              </div>
+              {/* Stats Strip */}
+              {workouts.length > 0 && (
+                <div className="grid grid-cols-3 gap-3">
+                  {[{icon:'📋',label:'Treinos',value:workouts.length},{icon:'🏋️',label:'Exercícios',value:totalExercises},{icon:'📎',label:'Mídias',value:totalMedia}].map(s=>(
+                    <div key={s.label} className="glass rounded-xl py-3 text-center">
+                      <div className="text-xl">{s.icon}</div>
+                      <div className="text-lg font-bold text-white">{s.value}</div>
+                      <div className="text-xs text-gray-500">{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="max-w-4xl mx-auto px-4 py-6">
+            {workouts.length === 0 ? (
+              <div className="text-center py-24 fade-in">
+                <div className="text-8xl mb-6">🏋️‍♂️</div>
+                <h2 className="text-2xl font-bold text-white mb-2">Nenhum treino ainda</h2>
+                <p className="text-gray-500 mb-8 max-w-sm mx-auto">Crie seu primeiro treino com exercícios, séries, cargas, PSE e mídias demonstrativas</p>
+                <button onClick={openNew} className="px-8 py-4 bg-primary-600 hover:bg-primary-500 rounded-2xl text-white font-bold text-lg shadow-xl shadow-primary-600/20">+ Criar primeiro treino</button>
+              </div>
+            ) : (
+              <>
+                {/* Filters */}
+                <div className="glass rounded-2xl p-3 mb-5 flex flex-wrap gap-2">
+                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar treino..." className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-primary-500 flex-1 min-w-[160px]" />
+                  <select value={filterDay} onChange={e=>setFilterDay(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                    <option value="">📅 Todos os dias</option>
+                    {WEEK_DAYS.map(d=><option key={d}>{d}</option>)}
+                  </select>
+                  {categories.length > 0 && (
+                    <select value={filterCat} onChange={e=>setFilterCat(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                      <option value="">🏷️ Todas as categorias</option>
+                      {categories.map(c=><option key={c}>{c}</option>)}
+                    </select>
+                  )}
+                  <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none">
+                    <option value="newest">Mais recentes</option>
+                    <option value="oldest">Mais antigos</option>
+                    <option value="name">A–Z</option>
+                    <option value="exercises">+ exercícios</option>
+                  </select>
+                </div>
+
+                {filtered.length === 0 ? (
+                  <div className="text-center py-12"><p className="text-gray-500">Nenhum treino encontrado com esses filtros.</p></div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {filtered.map(w => {
+                      const sets = w.exercises.reduce((a,e)=>a+e.sets.length,0);
+                      const media = w.exercises.reduce((a,e)=>a+e.media.length,0);
+                      const allPSE = w.exercises.flatMap(e=>e.sets.map(s=>s.pse));
+                      const avgP = allPSE.length ? (allPSE.reduce((a,b)=>a+b,0)/allPSE.length) : null;
+                      const date = new Date(w.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+                      return (
+                        <div key={w.id} className="glass rounded-2xl overflow-hidden card-hover cursor-pointer" onClick={()=>openDetail(w.id)}>
+                          <div className="p-4">
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-white text-base truncate">{w.name}</h3>
+                                <p className="text-xs text-gray-500 mt-0.5">{date}</p>
+                              </div>
+                              {w.category && <span className="badge bg-primary-900/40 text-primary-300 border border-primary-700/40 flex-shrink-0">{w.category}</span>}
+                            </div>
+                            {w.description && <p className="text-xs text-gray-400 mb-3 line-clamp-2">{w.description}</p>}
+                            {/* Days */}
+                            {w.weekDays?.length > 0 && (
+                              <div className="flex gap-1 mb-3 flex-wrap">
+                                {WEEK_DAYS.map(d=>(
+                                  <span key={d} className={`text-xs px-1.5 py-0.5 rounded font-medium ${w.weekDays.includes(d)?'bg-primary-600 text-white':'bg-gray-800 text-gray-600'}`}>{d}</span>
+                                ))}
+                              </div>
+                            )}
+                            {/* Stats */}
+                            <div className="flex gap-3 flex-wrap">
+                              <span className="text-xs text-gray-400">🏋️ {w.exercises.length} exercícios</span>
+                              <span className="text-xs text-gray-400">🔢 {sets} séries</span>
+                              {media>0&&<span className="text-xs text-gray-400">📎 {media} mídias</span>}
+                              {avgP!==null && <span className="text-xs font-semibold" style={{color:PSE_COLORS[Math.round(avgP)]}}>PSE ≈ {avgP.toFixed(1)}</span>}
+                            </div>
+                          </div>
+                          {/* Actions */}
+                          <div className="border-t border-white/5 px-4 py-2 flex gap-2 justify-end" onClick={e=>e.stopPropagation()}>
+                            <button onClick={()=>openEdit(w.id)} className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300">✏️ Editar</button>
+                            <button onClick={()=>duplicateWorkout(w.id)} className="text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-lg text-gray-300">📋 Duplicar</button>
+                            <button onClick={()=>{ if(confirm(`Excluir "${w.name}"?`)) deleteWorkout(w.id); }} className="text-xs px-3 py-1.5 bg-red-900/30 hover:bg-red-900/60 rounded-lg text-red-400">🗑️</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    /* ─────────────────────────── APP ROOT ─────────────────────────── */
+    function App() {
+      const { view, toast } = useContext(AppCtx);
+      return (
+        <>
+          {view === 'dashboard' && <Dashboard />}
+          {view === 'form' && <WorkoutForm />}
+          {view === 'detail' && <WorkoutDetail />}
+          <Toast toast={toast} />
+        </>
+      );
+    }
+
+    function Root() {
+      return (
+        <AppProvider>
+          <App />
+        </AppProvider>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+  </script>
+</body>
+</html>
