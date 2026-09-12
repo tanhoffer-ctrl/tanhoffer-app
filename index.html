@@ -147,9 +147,8 @@
     const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
     // Gera um documento formatado e abre a impressao (o usuario escolhe "Salvar como PDF")
+    // Usa um iframe oculto (nao depende de pop-up), com fallback para nova aba.
     function exportWorkoutPDF(w, student) {
-      const win = window.open('', '_blank');
-      if (!win) { alert('Permita pop-ups/nova aba para exportar o PDF.'); return; }
       const daysStr = (w.weekDays && w.weekDays.length) ? w.weekDays.join(', ') : '';
       const exBlocks = w.exercises.map((ex, i) => {
         const rows = ex.sets.map((s, si) =>
@@ -199,8 +198,11 @@
         '.imgs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }' +
         '.imgs img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }' +
         '.footer { margin-top: 20px; text-align: center; color: #999; font-size: 11px; }' +
-        '@media print { body { padding: 12px; } .ex { break-inside: avoid; } }' +
+        '.toolbar { position: sticky; top: 0; background: #fff; padding: 8px 0 12px; margin-bottom: 8px; border-bottom: 1px solid #eee; }' +
+        '.toolbar button { background: #ea580c; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; cursor: pointer; }' +
+        '@media print { body { padding: 12px; } .ex { break-inside: avoid; } .toolbar { display: none; } }' +
         '</style></head><body>' +
+        '<div class="toolbar"><button onclick="window.print()">Imprimir / Salvar como PDF</button></div>' +
         '<h1>' + esc(w.name) + '</h1>' +
         '<div class="sub">' + (w.category ? esc(w.category) + ' &middot; ' : '') + w.exercises.length + ' exercicios' + (daysStr ? ' &middot; ' + esc(daysStr) : '') + '</div>' +
         studentBlock +
@@ -209,11 +211,51 @@
         '<div class="footer">Gerado pelo WorkoutPro em ' + new Date().toLocaleDateString('pt-BR') + '</div>' +
         '</body></html>';
 
-      win.document.open();
-      win.document.write(html);
-      win.document.close();
-      // aguarda imagens carregarem antes de imprimir
-      win.onload = () => { setTimeout(() => { win.focus(); win.print(); }, 300); };
+      // Abre em nova aba. Escrevemos o HTML e disparamos a impressao apos as imagens carregarem.
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        // tenta imprimir automaticamente; se as imagens ainda estiverem carregando, aguarda
+        const tryPrint = () => {
+          try {
+            const imgs = win.document.images;
+            let allLoaded = true;
+            for (let i = 0; i < imgs.length; i++) { if (!imgs[i].complete) { allLoaded = false; break; } }
+            if (allLoaded) { win.focus(); win.print(); }
+            else { setTimeout(tryPrint, 250); }
+          } catch (e) { /* janela fechada */ }
+        };
+        setTimeout(tryPrint, 400);
+      } else {
+        // Pop-up bloqueado: usa iframe oculto na propria pagina
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.right = '0';
+        iframe.style.bottom = '0';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = '0';
+        document.body.appendChild(iframe);
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+        const printIframe = () => {
+          try {
+            const imgs = doc.images;
+            let allLoaded = true;
+            for (let i = 0; i < imgs.length; i++) { if (!imgs[i].complete) { allLoaded = false; break; } }
+            if (allLoaded) {
+              iframe.contentWindow.focus();
+              iframe.contentWindow.print();
+              setTimeout(() => document.body.removeChild(iframe), 1000);
+            } else { setTimeout(printIframe, 250); }
+          } catch (e) {}
+        };
+        setTimeout(printIframe, 400);
+      }
     }
 
     const AppCtx = createContext(null);
