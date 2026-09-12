@@ -164,7 +164,33 @@
     const newSet = () => ({ id: uid(), reps: '', load: '', unit: 'kg', pse: 7, rest: 60, done: false });
     const newExercise = () => ({ id: uid(), name: '', muscleGroup: '', equipment: '', notes: '', sets: [newSet()], media: [] });
     const newWorkout = () => ({ id: uid(), name: '', description: '', weekDays: [], category: '', studentId: '', createdAt: new Date().toISOString(), exercises: [] });
-    const newStudent = () => ({ id: uid(), name: '', goal: '', notes: '', phone: '', createdAt: new Date().toISOString() });
+    const newStudent = () => ({ id: uid(), name: '', goal: '', notes: '', phone: '', email: '', birth: '', weight: '', height: '', pass: '', createdAt: new Date().toISOString() });
+
+    // hash simples (nao e criptografia forte - apenas ofusca a senha no armazenamento)
+    function hashStr(str) {
+      let h = 5381;
+      const s = String(str);
+      for (let i = 0; i < s.length; i++) { h = ((h << 5) + h) + s.charCodeAt(i); h = h & h; }
+      return 'h' + (h >>> 0).toString(16);
+    }
+    // calcula idade a partir de data ISO (yyyy-mm-dd)
+    function calcAge(birth) {
+      if (!birth) return '';
+      const b = new Date(birth); if (isNaN(b)) return '';
+      const now = new Date();
+      let age = now.getFullYear() - b.getFullYear();
+      const m = now.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+      return age >= 0 && age < 130 ? age : '';
+    }
+    function calcIMC(weight, height) {
+      const w = parseFloat(String(weight).replace(',', '.'));
+      const h = parseFloat(String(height).replace(',', '.'));
+      if (!w || !h) return '';
+      const hm = h > 3 ? h / 100 : h; // aceita altura em cm ou m
+      const imc = w / (hm * hm);
+      return (imc > 0 && imc < 100) ? imc.toFixed(1) : '';
+    }
 
     // escapa texto para inserir no HTML do PDF com seguranca
     const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -248,12 +274,44 @@
       const [activeId, setActiveId] = useState(null);
       const [activeStudentId, setActiveStudentId] = useState(null); // aluno selecionado p/ filtro
       const [toast, setToast] = useState(null);
+      // ---- Autenticacao (privacidade casual) ----
+      const [trainerHash, setTrainerHash] = useState(() => localStorage.getItem('trainerPass') || '');
+      const [auth, setAuth] = useState(() => {
+        try { return JSON.parse(sessionStorage.getItem('auth') || 'null'); } catch (e) { return null; }
+      });
 
       useEffect(() => { localStorage.setItem('workouts', JSON.stringify(workouts)); }, [workouts]);
       useEffect(() => { localStorage.setItem('history', JSON.stringify(history)); }, [history]);
       useEffect(() => { localStorage.setItem('students', JSON.stringify(students)); }, [students]);
+      useEffect(() => {
+        if (auth) sessionStorage.setItem('auth', JSON.stringify(auth));
+        else sessionStorage.removeItem('auth');
+      }, [auth]);
 
       const showToast = (msg, type) => { setToast({ msg, type: type || 'success' }); setTimeout(() => setToast(null), 2600); };
+
+      // define a senha do treinador no 1o acesso
+      const setupTrainer = (pass) => {
+        const h = hashStr(pass);
+        localStorage.setItem('trainerPass', h);
+        setTrainerHash(h);
+        setAuth({ role: 'trainer' });
+        showToast('Senha do treinador definida!');
+      };
+      // login do treinador
+      const loginTrainer = (pass) => {
+        if (hashStr(pass) === trainerHash) { setAuth({ role: 'trainer' }); return true; }
+        return false;
+      };
+      // login do aluno (por nome + senha definida pelo treinador)
+      const loginStudent = (studentId, pass) => {
+        const s = students.find(x => x.id === studentId);
+        if (s && s.pass && s.pass === pass) { setAuth({ role: 'student', studentId }); setActiveStudentId(studentId); return true; }
+        return false;
+      };
+      const logout = () => { setAuth(null); setActiveStudentId(null); setView('dashboard'); setActiveId(null); };
+      const isTrainer = auth && auth.role === 'trainer';
+      const isStudent = auth && auth.role === 'student';
 
       const saveWorkout = (w) => {
         setWorkouts(prev => prev.find(x => x.id === w.id) ? prev.map(x => x.id === w.id ? w : x) : [...prev, w]);
@@ -324,6 +382,7 @@
           saveSession, deleteSession, exportData, importData,
           saveStudent, deleteStudent, studentName,
           activeStudentId, setActiveStudentId,
+          auth, trainerHash, setupTrainer, loginTrainer, loginStudent, logout, isTrainer, isStudent,
           view, setView, activeWorkout, activeId,
           openNew, openEdit, openDetail, openRun, toast
         }}>
@@ -709,7 +768,7 @@
     }
 
     function WorkoutDetail() {
-      const { activeWorkout, openEdit, openRun, deleteWorkout, setView, history, studentName, students } = useContext(AppCtx);
+      const { activeWorkout, openEdit, openRun, deleteWorkout, setView, history, studentName, students, isStudent } = useContext(AppCtx);
       const [modal, setModal] = useState(null);
       const [openEx, setOpenEx] = useState(null);
       const w = activeWorkout;
@@ -736,8 +795,8 @@
               </div>
               <button className="btn btn-green" onClick={() => openRun(w.id)}>Iniciar</button>
               <button className="btn btn-ghost" onClick={() => exportWorkoutPDF(w, studentObj)}>Exportar PDF</button>
-              <button className="btn btn-ghost" onClick={() => openEdit(w.id)}>Editar</button>
-              <button className="btn btn-danger" onClick={() => { if (confirm('Excluir treino?')) deleteWorkout(w.id); }}>Excluir</button>
+              {!isStudent && <button className="btn btn-ghost" onClick={() => openEdit(w.id)}>Editar</button>}
+              {!isStudent && <button className="btn btn-danger" onClick={() => { if (confirm('Excluir treino?')) deleteWorkout(w.id); }}>Excluir</button>}
             </div>
           </div>
           <div className="row wrap" style={{ gap: 12, marginBottom: 20 }}>
@@ -957,7 +1016,13 @@
                         </div>
                       </div>
                       {s.notes && <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>{s.notes}</p>}
-                      {s.phone && <p style={{ fontSize: 12, color: 'var(--muted)' }}>Tel: {s.phone}</p>}
+                      <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+                        {calcAge(s.birth) !== '' && <div>Idade: {calcAge(s.birth)} anos</div>}
+                        {s.email && <div>E-mail: {s.email}</div>}
+                        {s.phone && <div>Tel: {s.phone}</div>}
+                        {(s.weight || s.height) && <div>{s.weight ? s.weight + ' kg' : ''}{s.weight && s.height ? ' / ' : ''}{s.height ? s.height + ' cm' : ''}{calcIMC(s.weight, s.height) !== '' ? ' (IMC ' + calcIMC(s.weight, s.height) + ')' : ''}</div>}
+                        {s.pass && <div style={{ color: 'var(--green)' }}>Acesso do aluno: ativado</div>}
+                      </div>
                       <div className="row wrap" style={{ gap: 12, fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
                         <span>{nW} treino(s)</span><span>{nS} sessao(oes)</span>
                       </div>
@@ -975,14 +1040,31 @@
 
           {editing && (
             <div className="modal-back" onClick={() => setEditing(null)}>
-              <div className="card" style={{ maxWidth: 460, width: '100%', padding: 24 }} onClick={e => e.stopPropagation()}>
+              <div className="card" style={{ maxWidth: 480, width: '100%', padding: 24, maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
                 <strong style={{ fontSize: 18, display: 'block', marginBottom: 16 }}>{editing.name ? 'Editar aluno' : 'Novo aluno'}</strong>
                 <div style={{ marginBottom: 12 }}><span className="label">Nome *</span>
                   <input className="input" value={editing.name} placeholder="Nome do aluno" onChange={e => up('name', e.target.value)} autoFocus /></div>
+                <div className="grid2" style={{ marginBottom: 12 }}>
+                  <div><span className="label">Data de nascimento</span>
+                    <input className="input" type="date" value={editing.birth} onChange={e => up('birth', e.target.value)} />
+                    {calcAge(editing.birth) !== '' && <span style={{ fontSize: 11, color: 'var(--muted)' }}>{calcAge(editing.birth)} anos</span>}
+                  </div>
+                  <div><span className="label">E-mail</span>
+                    <input className="input" type="email" value={editing.email} placeholder="email@exemplo.com" onChange={e => up('email', e.target.value)} /></div>
+                  <div><span className="label">Peso (kg)</span>
+                    <input className="input" type="number" step="0.1" value={editing.weight} placeholder="ex: 72.5" onChange={e => up('weight', e.target.value)} /></div>
+                  <div><span className="label">Altura (cm)</span>
+                    <input className="input" type="number" step="0.1" value={editing.height} placeholder="ex: 175" onChange={e => up('height', e.target.value)} /></div>
+                </div>
+                {calcIMC(editing.weight, editing.height) !== '' && <div style={{ fontSize: 12, color: 'var(--primary)', marginBottom: 12 }}>IMC: {calcIMC(editing.weight, editing.height)}</div>}
                 <div style={{ marginBottom: 12 }}><span className="label">Objetivo</span>
                   <input className="input" value={editing.goal} placeholder="ex: Hipertrofia, emagrecimento..." onChange={e => up('goal', e.target.value)} /></div>
                 <div style={{ marginBottom: 12 }}><span className="label">Telefone / contato</span>
                   <input className="input" value={editing.phone} placeholder="(opcional)" onChange={e => up('phone', e.target.value)} /></div>
+                <div style={{ marginBottom: 12 }}><span className="label">Senha de acesso do aluno</span>
+                  <input className="input" type="text" value={editing.pass} placeholder="senha para o aluno logar" onChange={e => up('pass', e.target.value)} />
+                  <span style={{ fontSize: 11, color: 'var(--muted)' }}>Com esta senha o aluno acessa apenas os treinos dele (somente leitura). Deixe em branco para o aluno nao ter login.</span>
+                </div>
                 <div style={{ marginBottom: 20 }}><span className="label">Observacoes</span>
                   <textarea className="input" rows={3} value={editing.notes} placeholder="Restricoes, historico, anotacoes..." onChange={e => up('notes', e.target.value)} /></div>
                 <div className="row" style={{ justifyContent: 'flex-end', gap: 8 }}>
@@ -997,32 +1079,44 @@
     }
 
     function Dashboard() {
-      const { workouts, openNew, openDetail, openEdit, openRun, deleteWorkout, duplicateWorkout, setView, history, students, activeStudentId, setActiveStudentId, studentName } = useContext(AppCtx);
+      const { workouts, openNew, openDetail, openEdit, openRun, deleteWorkout, duplicateWorkout, setView, history, students, activeStudentId, setActiveStudentId, studentName, auth, isStudent, logout } = useContext(AppCtx);
       const [search, setSearch] = useState('');
       const [sort, setSort] = useState('newest');
+      // aluno ve apenas os treinos dele; treinador ve tudo (ou filtrado)
+      const effectiveStudentId = isStudent ? auth.studentId : activeStudentId;
       const list = useMemo(() => {
         let l = workouts.filter(w => w.name.toLowerCase().includes(search.toLowerCase()));
-        if (activeStudentId) l = l.filter(w => w.studentId === activeStudentId);
+        if (effectiveStudentId) l = l.filter(w => w.studentId === effectiveStudentId);
         if (sort === 'newest') l = [...l].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         else if (sort === 'name') l = [...l].sort((a, b) => a.name.localeCompare(b.name));
         return l;
-      }, [workouts, search, sort, activeStudentId]);
-      const totalEx = workouts.reduce((a, w) => a + w.exercises.length, 0);
+      }, [workouts, search, sort, effectiveStudentId, isStudent]);
+      const visibleWorkouts = isStudent ? workouts.filter(w => w.studentId === auth.studentId) : workouts;
+      const totalEx = visibleWorkouts.reduce((a, w) => a + w.exercises.length, 0);
+      const visibleHistory = isStudent ? history.filter(h => { const w = workouts.find(x => x.id === h.workoutId); return w && w.studentId === auth.studentId; }) : history;
 
       return (
         <div className="container">
           <div style={{ padding: '30px 0 20px' }}>
             <div className="row" style={{ justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
-              <div><h1 style={{ fontSize: 28 }}>WorkoutPro</h1><p style={{ color: 'var(--muted)', fontSize: 14 }}>Seus treinos de musculacao</p></div>
-              <button className="btn btn-primary" onClick={openNew}>+ Novo treino</button>
+              <div>
+                <h1 style={{ fontSize: 28 }}>WorkoutPro</h1>
+                <p style={{ color: 'var(--muted)', fontSize: 14 }}>{isStudent ? ('Ola, ' + studentName(auth.studentId) + '!') : 'Seus treinos de musculacao'}</p>
+              </div>
+              <div className="row" style={{ gap: 8 }}>
+                {!isStudent && <button className="btn btn-primary" onClick={openNew}>+ Novo treino</button>}
+                <button className="btn btn-ghost" onClick={logout}>Sair</button>
+              </div>
             </div>
-            <div className="row wrap" style={{ gap: 8, marginBottom: 16 }}>
-              <button className="navtab active" onClick={() => {}}>Treinos</button>
-              <button className="navtab inactive" onClick={() => setView('students')}>Alunos</button>
-              <button className="navtab inactive" onClick={() => setView('history')}>Historico</button>
-              <button className="navtab inactive" onClick={() => setView('settings')}>Configuracoes</button>
-            </div>
-            {activeStudentId && (
+            {!isStudent && (
+              <div className="row wrap" style={{ gap: 8, marginBottom: 16 }}>
+                <button className="navtab active" onClick={() => {}}>Treinos</button>
+                <button className="navtab inactive" onClick={() => setView('students')}>Alunos</button>
+                <button className="navtab inactive" onClick={() => setView('history')}>Historico</button>
+                <button className="navtab inactive" onClick={() => setView('settings')}>Configuracoes</button>
+              </div>
+            )}
+            {!isStudent && activeStudentId && (
               <div className="card" style={{ padding: '10px 14px', marginBottom: 16, background: 'rgba(249,115,22,0.12)', borderColor: 'var(--primary)' }}>
                 <div className="row" style={{ justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 14 }}>Mostrando treinos do aluno: <strong style={{ color: 'var(--primary)' }}>{studentName(activeStudentId)}</strong></span>
@@ -1030,21 +1124,23 @@
                 </div>
               </div>
             )}
-            {workouts.length > 0 && (
+            {visibleWorkouts.length > 0 && (
               <div className="row" style={{ gap: 12 }}>
-                <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{workouts.length}</div><div className="stat-label">Treinos</div></div>
+                <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{visibleWorkouts.length}</div><div className="stat-label">Treinos</div></div>
                 <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{totalEx}</div><div className="stat-label">Exercicios</div></div>
-                <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{history.length}</div><div className="stat-label">Sessoes</div></div>
+                <div className="card stat-box" style={{ flex: 1 }}><div className="stat-num">{visibleHistory.length}</div><div className="stat-label">Sessoes</div></div>
               </div>
             )}
           </div>
 
-          {workouts.length === 0 ? (
+          {visibleWorkouts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
               <div style={{ fontSize: 50, marginBottom: 16 }}>[ ! ]</div>
               <h2 style={{ marginBottom: 8 }}>Nenhum treino ainda</h2>
-              <p style={{ color: 'var(--muted)', marginBottom: 24 }}>Crie seu primeiro treino com exercicios, series, cargas e PSE</p>
-              <button className="btn btn-primary" onClick={openNew}>+ Criar primeiro treino</button>
+              {isStudent
+                ? <p style={{ color: 'var(--muted)', marginBottom: 24 }}>Seu treinador ainda nao criou treinos para voce.</p>
+                : <p style={{ color: 'var(--muted)', marginBottom: 24 }}>Crie seu primeiro treino com exercicios, series, cargas e PSE</p>}
+              {!isStudent && <button className="btn btn-primary" onClick={openNew}>+ Criar primeiro treino</button>}
             </div>
           ) : (
             <div>
@@ -1081,9 +1177,9 @@
                       </div>
                       <div className="row" style={{ padding: 12, borderTop: '1px solid var(--border)', justifyContent: 'flex-end', gap: 8 }}>
                         <button className="btn btn-green" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => openRun(w.id)}>Iniciar</button>
-                        <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => openEdit(w.id)}>Editar</button>
-                        <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => duplicateWorkout(w.id)}>Duplicar</button>
-                        <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (confirm('Excluir "' + w.name + '"?')) deleteWorkout(w.id); }}>Excluir</button>
+                        {!isStudent && <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => openEdit(w.id)}>Editar</button>}
+                        {!isStudent && <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => duplicateWorkout(w.id)}>Duplicar</button>}
+                        {!isStudent && <button className="btn btn-danger" style={{ padding: '6px 12px', fontSize: 12 }} onClick={() => { if (confirm('Excluir "' + w.name + '"?')) deleteWorkout(w.id); }}>Excluir</button>}
                       </div>
                     </div>
                   );
@@ -1095,17 +1191,108 @@
       );
     }
 
+    /* ============ TELA DE LOGIN / SETUP ============ */
+    function LoginView() {
+      const { trainerHash, setupTrainer, loginTrainer, loginStudent, students, toast } = useContext(AppCtx);
+      const firstTime = !trainerHash;
+      const [mode, setMode] = useState(firstTime ? 'setup' : 'choose'); // setup | choose | trainer | student
+      const [p1, setP1] = useState('');
+      const [p2, setP2] = useState('');
+      const [err, setErr] = useState('');
+      const [studentId, setStudentId] = useState('');
+      const [spass, setSpass] = useState('');
+      const studentsWithPass = students.filter(s => s.pass);
+
+      const doSetup = () => {
+        if (p1.length < 3) { setErr('A senha deve ter ao menos 3 caracteres'); return; }
+        if (p1 !== p2) { setErr('As senhas nao conferem'); return; }
+        setupTrainer(p1);
+      };
+      const doLoginTrainer = () => { if (!loginTrainer(p1)) setErr('Senha incorreta'); };
+      const doLoginStudent = () => {
+        if (!studentId) { setErr('Selecione seu nome'); return; }
+        if (!loginStudent(studentId, spass)) setErr('Senha incorreta');
+      };
+
+      return (
+        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div className="card" style={{ maxWidth: 400, width: '100%', padding: 28 }}>
+            <h1 style={{ fontSize: 26, color: 'var(--primary)', marginBottom: 4 }}>WorkoutPro</h1>
+
+            {mode === 'setup' && (
+              <div>
+                <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 20 }}>Primeiro acesso: defina a senha do treinador.</p>
+                <div style={{ marginBottom: 12 }}><span className="label">Nova senha</span>
+                  <input className="input" type="password" value={p1} onChange={e => { setP1(e.target.value); setErr(''); }} autoFocus /></div>
+                <div style={{ marginBottom: 16 }}><span className="label">Confirmar senha</span>
+                  <input className="input" type="password" value={p2} onChange={e => { setP2(e.target.value); setErr(''); }} onKeyDown={e => e.key === 'Enter' && doSetup()} /></div>
+                {err && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>! {err}</p>}
+                <button className="btn btn-primary" style={{ width: '100%' }} onClick={doSetup}>Definir senha e entrar</button>
+                <p style={{ color: 'var(--muted)', fontSize: 11, marginTop: 12 }}>Guarde esta senha. Ela protege o acesso do treinador neste navegador.</p>
+              </div>
+            )}
+
+            {mode === 'choose' && (
+              <div>
+                <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 20 }}>Como voce quer entrar?</p>
+                <button className="btn btn-primary" style={{ width: '100%', marginBottom: 10 }} onClick={() => { setMode('trainer'); setErr(''); setP1(''); }}>Sou o treinador</button>
+                <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => { setMode('student'); setErr(''); setSpass(''); }}>Sou aluno</button>
+              </div>
+            )}
+
+            {mode === 'trainer' && (
+              <div>
+                <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 20 }}>Acesso do treinador</p>
+                <div style={{ marginBottom: 16 }}><span className="label">Senha</span>
+                  <input className="input" type="password" value={p1} onChange={e => { setP1(e.target.value); setErr(''); }} onKeyDown={e => e.key === 'Enter' && doLoginTrainer()} autoFocus /></div>
+                {err && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>! {err}</p>}
+                <button className="btn btn-primary" style={{ width: '100%', marginBottom: 10 }} onClick={doLoginTrainer}>Entrar</button>
+                <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => { setMode('choose'); setErr(''); }}>Voltar</button>
+              </div>
+            )}
+
+            {mode === 'student' && (
+              <div>
+                <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 20 }}>Acesso do aluno</p>
+                {studentsWithPass.length === 0 ? (
+                  <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 16 }}>Nenhum aluno com acesso liberado. Peca ao seu treinador para definir sua senha.</p>
+                ) : (
+                  <div>
+                    <div style={{ marginBottom: 12 }}><span className="label">Seu nome</span>
+                      <select className="input" value={studentId} onChange={e => { setStudentId(e.target.value); setErr(''); }}>
+                        <option value="">Selecionar...</option>
+                        {studentsWithPass.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select></div>
+                    <div style={{ marginBottom: 16 }}><span className="label">Senha</span>
+                      <input className="input" type="password" value={spass} onChange={e => { setSpass(e.target.value); setErr(''); }} onKeyDown={e => e.key === 'Enter' && doLoginStudent()} /></div>
+                    {err && <p style={{ color: '#f87171', fontSize: 13, marginBottom: 12 }}>! {err}</p>}
+                    <button className="btn btn-primary" style={{ width: '100%', marginBottom: 10 }} onClick={doLoginStudent}>Entrar</button>
+                  </div>
+                )}
+                <button className="btn btn-ghost" style={{ width: '100%' }} onClick={() => { setMode('choose'); setErr(''); }}>Voltar</button>
+              </div>
+            )}
+          </div>
+          <Toast toast={toast} />
+        </div>
+      );
+    }
+
     function App() {
-      const { view, toast } = useContext(AppCtx);
+      const { view, toast, auth, isStudent } = useContext(AppCtx);
+      if (!auth) return <LoginView />;
+      // aluno so pode acessar telas de leitura; qualquer outra vira dashboard
+      const studentAllowed = { dashboard: 1, detail: 1, run: 1 };
+      const safeView = isStudent && !studentAllowed[view] ? 'dashboard' : view;
       return (
         <div>
-          {view === 'dashboard' && <Dashboard />}
-          {view === 'form' && <WorkoutForm />}
-          {view === 'detail' && <WorkoutDetail />}
-          {view === 'run' && <RunMode />}
-          {view === 'history' && <HistoryView />}
-          {view === 'students' && <StudentsView />}
-          {view === 'settings' && <SettingsView />}
+          {safeView === 'dashboard' && <Dashboard />}
+          {safeView === 'form' && <WorkoutForm />}
+          {safeView === 'detail' && <WorkoutDetail />}
+          {safeView === 'run' && <RunMode />}
+          {safeView === 'history' && <HistoryView />}
+          {safeView === 'students' && <StudentsView />}
+          {safeView === 'settings' && <SettingsView />}
           <Toast toast={toast} />
         </div>
       );
