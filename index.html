@@ -96,10 +96,33 @@
     .navtab { padding: 8px 14px; border-radius: 10px; font-weight: 600; font-size: 13px; }
     .navtab.active { background: var(--primary); color: #fff; }
     .navtab.inactive { background: transparent; color: var(--muted); }
+
+    /* ---- Impressao / PDF ---- */
+    #print-area { display: none; }
+    @media print {
+      body { background: #fff !important; }
+      body > #root { display: none !important; }
+      #print-area { display: block !important; color: #111; font-family: Arial, Helvetica, sans-serif; padding: 0; }
+      #print-area h1 { font-size: 22px; margin: 0 0 2px; color: #ea580c; }
+      #print-area .sub { color: #666; font-size: 12px; margin-bottom: 14px; }
+      #print-area .box { background: #f6f6f6; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; }
+      #print-area .desc { font-size: 13px; margin-bottom: 14px; }
+      #print-area .ex { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 14px; break-inside: avoid; page-break-inside: avoid; }
+      #print-area .ex-title { font-size: 15px; font-weight: bold; margin-bottom: 6px; }
+      #print-area .ex-meta { font-weight: normal; color: #666; font-size: 12px; }
+      #print-area .note { font-size: 12px; color: #b45309; font-style: italic; margin: 4px 0; }
+      #print-area table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+      #print-area th, #print-area td { border: 1px solid #ccc; padding: 5px 6px; text-align: center; }
+      #print-area th { background: #fafafa; }
+      #print-area .imgs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      #print-area .imgs img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+      #print-area .footer { margin-top: 20px; text-align: center; color: #999; font-size: 11px; }
+    }
   </style>
 </head>
 <body>
   <div id="root"></div>
+  <div id="print-area"></div>
   <noscript>Este aplicativo precisa de JavaScript ativado.</noscript>
 
   <script type="text/babel">
@@ -146,8 +169,8 @@
     // escapa texto para inserir no HTML do PDF com seguranca
     const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 
-    // Gera um documento formatado e abre a impressao (o usuario escolhe "Salvar como PDF")
-    // Usa um iframe oculto (nao depende de pop-up), com fallback para nova aba.
+    // Monta o conteudo do treino dentro de #print-area (na propria pagina) e chama window.print().
+    // Nao depende de pop-up nem de nova aba - funciona de forma consistente em Chrome/Safari/Mac.
     function exportWorkoutPDF(w, student) {
       const daysStr = (w.weekDays && w.weekDays.length) ? w.weekDays.join(', ') : '';
       const exBlocks = w.exercises.map((ex, i) => {
@@ -184,78 +207,29 @@
           '</div>'
         : '';
 
-      const html =
-        '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>' + esc(w.name) + '</title><style>' +
-        '* { box-sizing: border-box; } body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; padding: 28px; }' +
-        'h1 { font-size: 22px; margin: 0 0 2px; color: #ea580c; } .sub { color: #666; font-size: 12px; margin-bottom: 14px; }' +
-        '.box { background: #f6f6f6; border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px; }' +
-        '.desc { font-size: 13px; margin-bottom: 14px; }' +
-        '.ex { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 14px; page-break-inside: avoid; }' +
-        '.ex-title { font-size: 15px; font-weight: bold; margin-bottom: 6px; } .ex-meta { font-weight: normal; color: #666; font-size: 12px; }' +
-        '.note { font-size: 12px; color: #b45309; font-style: italic; margin: 4px 0; }' +
-        'table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }' +
-        'th, td { border: 1px solid #ccc; padding: 5px 6px; text-align: center; } th { background: #fafafa; }' +
-        '.imgs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }' +
-        '.imgs img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }' +
-        '.footer { margin-top: 20px; text-align: center; color: #999; font-size: 11px; }' +
-        '.toolbar { position: sticky; top: 0; background: #fff; padding: 8px 0 12px; margin-bottom: 8px; border-bottom: 1px solid #eee; }' +
-        '.toolbar button { background: #ea580c; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 14px; cursor: pointer; }' +
-        '@media print { body { padding: 12px; } .ex { break-inside: avoid; } .toolbar { display: none; } }' +
-        '</style></head><body>' +
-        '<div class="toolbar"><button onclick="window.print()">Imprimir / Salvar como PDF</button></div>' +
+      const inner =
         '<h1>' + esc(w.name) + '</h1>' +
         '<div class="sub">' + (w.category ? esc(w.category) + ' &middot; ' : '') + w.exercises.length + ' exercicios' + (daysStr ? ' &middot; ' + esc(daysStr) : '') + '</div>' +
         studentBlock +
         (w.description ? '<div class="desc">' + esc(w.description) + '</div>' : '') +
         exBlocks +
-        '<div class="footer">Gerado pelo WorkoutPro em ' + new Date().toLocaleDateString('pt-BR') + '</div>' +
-        '</body></html>';
+        '<div class="footer">Gerado pelo WorkoutPro em ' + new Date().toLocaleDateString('pt-BR') + '</div>';
 
-      // Abre em nova aba. Escrevemos o HTML e disparamos a impressao apos as imagens carregarem.
-      const win = window.open('', '_blank');
-      if (win) {
-        win.document.open();
-        win.document.write(html);
-        win.document.close();
-        // tenta imprimir automaticamente; se as imagens ainda estiverem carregando, aguarda
-        const tryPrint = () => {
-          try {
-            const imgs = win.document.images;
-            let allLoaded = true;
-            for (let i = 0; i < imgs.length; i++) { if (!imgs[i].complete) { allLoaded = false; break; } }
-            if (allLoaded) { win.focus(); win.print(); }
-            else { setTimeout(tryPrint, 250); }
-          } catch (e) { /* janela fechada */ }
-        };
-        setTimeout(tryPrint, 400);
-      } else {
-        // Pop-up bloqueado: usa iframe oculto na propria pagina
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'fixed';
-        iframe.style.right = '0';
-        iframe.style.bottom = '0';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = '0';
-        document.body.appendChild(iframe);
-        const doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(html);
-        doc.close();
-        const printIframe = () => {
-          try {
-            const imgs = doc.images;
-            let allLoaded = true;
-            for (let i = 0; i < imgs.length; i++) { if (!imgs[i].complete) { allLoaded = false; break; } }
-            if (allLoaded) {
-              iframe.contentWindow.focus();
-              iframe.contentWindow.print();
-              setTimeout(() => document.body.removeChild(iframe), 1000);
-            } else { setTimeout(printIframe, 250); }
-          } catch (e) {}
-        };
-        setTimeout(printIframe, 400);
-      }
+      const area = document.getElementById('print-area');
+      area.innerHTML = inner;
+
+      // espera as imagens do print-area carregarem, depois imprime
+      const doPrint = () => {
+        const imgs = area.getElementsByTagName('img');
+        let allLoaded = true;
+        for (let i = 0; i < imgs.length; i++) { if (!imgs[i].complete) { allLoaded = false; break; } }
+        if (allLoaded) {
+          window.print();
+        } else {
+          setTimeout(doPrint, 200);
+        }
+      };
+      setTimeout(doPrint, 150);
     }
 
     const AppCtx = createContext(null);
